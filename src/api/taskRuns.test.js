@@ -212,3 +212,25 @@ it('getTaskRuns With Query Params', () => {
     fetchMock.restore();
   });
 });
+
+it('rerunTaskRun', () => {
+  const filter = 'end:/taskruns/';
+  const originalTaskRun = {
+    metadata: { name: 'fake_taskRun' },
+    spec: { status: 'fake_status' },
+    status: 'fake_status'
+  };
+  const newTaskRun = { metadata: { name: 'fake_taskRun_rerun' } };
+  mockCSRFToken();
+  fetchMock.post(filter, { body: newTaskRun, status: 201 });
+  return API.rerunTaskRun(originalTaskRun).then(data => {
+    const body = JSON.parse(fetchMock.lastCall(filter)[1].body);
+    expect(body.metadata.generateName).toMatch(
+      new RegExp(originalTaskRun.metadata.name)
+    );
+    expect(body.status).toBeUndefined();
+    expect(body.spec.status).toBeUndefined();
+    expect(data).toEqual(newTaskRun);
+    fetchMock.restore();
+  });
+});

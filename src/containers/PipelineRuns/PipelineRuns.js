@@ -109,8 +109,7 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
   };
 
   rerun = pipelineRun => {
-    const { name, namespace } = pipelineRun.metadata;
-    rerunPipelineRun(namespace, { pipelinerunname: name });
+    rerunPipelineRun(pipelineRun);
   };
 
   toggleModal = showCreatePipelineRunModal => {
@@ -196,7 +195,7 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
       },
       {
         actionText: intl.formatMessage({
-          id: 'dashboard.rerunPipelineRun.actionText',
+          id: 'dashboard.rerun.actionText',
           defaultMessage: 'Rerun'
         }),
         action: this.rerun

@@ -1,10 +1,14 @@
 {
   "name": "@tektoncd/dashboard-utils",
   "version": "0.1.0",
+  "author": {
+    "name": "The Tekton Authors"
+  },
+  "license": "Apache-2.0",
   "private": false,
   "main": "./dist/utils/index.js",
   "scripts": {
-    "build": "rimraf dist && NODE_ENV=production babel src --out-dir dist --root-mode upward --ignore \"src/**/*.test.js,src/**/*.stories.js\" --no-copy-ignored",
+    "build": "rimraf dist && cross-env NODE_ENV=production babel src --out-dir dist --root-mode upward --ignore \"src/**/*.test.js,src/**/*.stories.js\" --no-copy-ignored",
     "clean": "rimraf dist",
     "prepare": "npm run build"
   },
@@ -18,11 +22,16 @@
     "react-router-dom": "^5.0.0"
   },
   "engines": {
-    "node": "^12.18.0",
+    "node": "^14.15.0",
     "npm": "^6.14.4"
   },
   "publishConfig": {
     "access": "public"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tektoncd/dashboard.git",
+    "directory": "packages/utils"
+  }
 }

@@ -14,32 +14,21 @@ limitations under the License.
 import React, { Component } from 'react';
 import { injectIntl } from 'react-intl';
 import { Button } from 'carbon-components-react';
-import { urls } from '@tektoncd/dashboard-utils';
 import { Restart32 as Restart } from '@carbon/icons-react';
 import './Rerun.scss';
 
 class Rerun extends Component {
   handleRerun = event => {
     event.preventDefault();
-    const { intl } = this.props;
-
-    const { namespace } = this.props.pipelineRun.metadata;
-    const payload = {
-      pipelinerunname: this.props.runName
-    };
-
-    this.props
-      .rerunPipelineRun(namespace, payload)
-      .then(headers => {
-        const logsURL = headers.get('Content-Location');
-        const newPipelineRunName = logsURL.substring(
-          logsURL.lastIndexOf('/') + 1
-        );
-        const finalURL = urls.pipelineRuns.byName({
+    const { getURL, intl, run, rerun, showNotification } = this.props;
+    const { namespace } = run.metadata;
+    rerun(run)
+      .then(newRun => {
+        const finalURL = getURL({
           namespace,
-          pipelineRunName: newPipelineRunName
+          name: newRun.metadata.name
         });
-        this.props.setShowRerunNotification({
+        showNotification({
           message: intl.formatMessage({
             id: 'dashboard.rerun.triggered',
             defaultMessage: 'Triggered rerun'
@@ -49,32 +38,17 @@ class Rerun extends Component {
         });
       })
       .catch(error => {
-        const statusCode = error.response.status;
-        /* istanbul ignore next */
-        switch (statusCode) {
-          case 500:
-            this.props.setShowRerunNotification({
-              message: intl.formatMessage({
-                id: 'dashboard.rerun.internalServerError',
-                defaultMessage:
-                  'An internal server error occurred when rerunning this PipelineRun: check the dashboard and extension pod logs for details'
-              }),
-              kind: 'error'
-            });
-            break;
-          default:
-            this.props.setShowRerunNotification({
-              message: intl.formatMessage(
-                {
-                  id: 'dashboard.rerun.error',
-                  defaultMessage:
-                    'An error occurred when rerunning this PipelineRun: check the dashboard and extension pod logs for details. Status code: ${statusCode}'
-                },
-                { statusCode }
-              ),
-              kind: 'error'
-            });
-        }
+        showNotification({
+          message: intl.formatMessage(
+            {
+              id: 'dashboard.rerun.error',
+              defaultMessage:
+                'An error occurred when rerunning {runName}: check the dashboard logs for details. Status code: {statusCode}'
+            },
+            { runName: run.metadata.name, statusCode: error.response.status }
+          ),
+          kind: 'error'
+        });
       });
   };
 
@@ -82,7 +56,6 @@ class Rerun extends Component {
     const { intl } = this.props;
     return (
       <Button
-        data-testid="rerun-btn"
         kind="ghost"
         className="tkn--rerun-btn"
         renderIcon={Restart}

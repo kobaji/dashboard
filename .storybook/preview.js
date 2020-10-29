@@ -12,28 +12,20 @@ limitations under the License.
 */
 
 import React from 'react';
-import { addDecorator, addParameters, configure } from '@storybook/react';
-import { withKnobs } from '@storybook/addon-knobs';
 
 import Container from './Container';
 
-addParameters({
+export const parameters = {
   options: {
-    showRoots: true,
     storySort: (a, b) =>
       a[1].kind === b[1].kind
         ? 0
         : a[1].id.localeCompare(b[1].id, undefined, { numeric: true })
   }
-});
+};
 
-addDecorator(story => <Container story={story} />);
-addDecorator(withKnobs);
-
-configure(
-  [
-    require.context('../src', true, /(?!node_modules).*\.stories.js$/),
-    require.context('../packages', true, /(?!node_modules).*\.stories.js$/)
-  ],
-  module
-);
+export const decorators = [
+  (story, context) => (
+    <Container story={story} notes={context.parameters.notes} />
+  )
+];

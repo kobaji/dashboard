@@ -199,17 +199,23 @@ it('getPipelineRuns With Query Params', () => {
 });
 
 it('rerunPipelineRun', () => {
-  const namespace = 'namespace';
-  const body = { fake: 'pipelineRun' };
-  const headerName = 'fake_headerName';
-  const headerValue = 'fake_headerValue';
-  const headers = { [headerName]: headerValue };
+  const filter = 'end:/pipelineruns/';
+  const originalPipelineRun = {
+    metadata: { name: 'fake_pipelineRun' },
+    spec: { status: 'fake_status' },
+    status: 'fake_status'
+  };
+  const newPipelineRun = { metadata: { name: 'fake_pipelineRun_rerun' } };
   mockCSRFToken();
-  fetchMock.post(`end:/rerun/`, { body, headers, status: 201 });
-  return API.rerunPipelineRun(namespace, { fake: 'existingPipelineRun' }).then(
-    data => {
-      expect(data.get(headerName)).toEqual(headerValue);
-      fetchMock.restore();
-    }
-  );
+  fetchMock.post(filter, { body: newPipelineRun, status: 201 });
+  return API.rerunPipelineRun(originalPipelineRun).then(data => {
+    const body = JSON.parse(fetchMock.lastCall(filter)[1].body);
+    expect(body.metadata.generateName).toMatch(
+      new RegExp(originalPipelineRun.metadata.name)
+    );
+    expect(body.status).toBeUndefined();
+    expect(body.spec.status).toBeUndefined();
+    expect(data).toEqual(newPipelineRun);
+    fetchMock.restore();
+  });
 });

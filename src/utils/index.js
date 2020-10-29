@@ -38,7 +38,7 @@ export function typeToPlural(type) {
 export async function followLogs(stepName, stepStatus, taskRun) {
   const { pod, namespace } = taskRun;
   let logs;
-  if (pod) {
+  if (pod && stepStatus) {
     const { container } = stepStatus;
     logs = getPodLog({
       container,
@@ -53,7 +53,7 @@ export async function followLogs(stepName, stepStatus, taskRun) {
 export async function fetchLogs(stepName, stepStatus, taskRun) {
   const { pod, namespace } = taskRun;
   let logs;
-  if (pod) {
+  if (pod && stepStatus) {
     const { container } = stepStatus;
     logs = getPodLog({
       container,
@@ -103,22 +103,6 @@ export function isStale(resource, state, resourceIdField = 'uid') {
   );
   const incomingVersion = parseInt(resource.metadata.resourceVersion, 10);
   return existingVersion > incomingVersion;
-}
-
-export function getGitValues(url) {
-  let copyUrl;
-
-  copyUrl = url.toLowerCase().replace(/https?:\/\//, '');
-
-  copyUrl = copyUrl.split('/');
-  const numSlashes = copyUrl.length;
-  if (numSlashes < 2) {
-    return {};
-  }
-
-  const [gitServer, gitOrg, gitRepo] = copyUrl;
-
-  return { gitServer, gitOrg, gitRepo: `${gitRepo}.git` };
 }
 
 // K8s label documentation comes from here:

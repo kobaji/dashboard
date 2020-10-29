@@ -11,7 +11,7 @@ This guide walks you through installing a working Tekton Dashboard locally from 
 * [Installing Tekton Pipelines](#installing-tekton-pipelines)
 * [Installing Tekton Dashboard](#installing-tekton-dashboard)
 * [Setting up the Istio Gateway and VirtualService](#setting-up-the-istio-gateway-and-virtualservice)
-* [Browsing the Istio dashboard](#browse-the-istio-dashboard)
+* [Browsing the Istio dashboard](#browsing-the-istio-dashboard)
 * [Adding basic authentication](#adding-basic-authentication)
 * [Cleaning up](#cleaning-up)
 
@@ -22,6 +22,9 @@ Before you begin, make sure the following tools are installed:
 1. [`kind`](https://kind.sigs.k8s.io): For creating a local cluster running on top of docker.
 1. [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl): For interacting with your Kubernetes cluster.
 1. [`istioctl`](https://istio.io/latest/docs/setup/getting-started/#download): For installing Istio.
+    - Version 1.7.0 is used in this walkthrough. Other version may not work as expected.
+    - You can check your istioctl version with: `istioctl version`
+
 
 Nothing more is required to run the walkthrough !
 
@@ -152,6 +155,13 @@ spec:
               - name: tls
                 port: 15443
                 targetPort: 15443
+  addonComponents:
+    prometheus:
+      enabled: true
+    kiali:
+      enabled: true
+    grafana:
+      enabled: true
 EOF
 ```
 
@@ -206,8 +216,7 @@ Tekton Pipelines should be up and running.
 Installing the latest Tekton Dashboard release is done by running the following command:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tektoncd/dashboard/master/scripts/release-installer | \
-   bash -s -- build latest --output /dev/stdout | istioctl kube-inject -f - | kubectl apply -f -
+curl -sL https://storage.googleapis.com/tekton-releases/dashboard/latest/tekton-dashboard-release.yaml | istioctl kube-inject -f - | kubectl apply -f -
 
 kubectl wait -n tekton-pipelines \
   --for=condition=ready pod \

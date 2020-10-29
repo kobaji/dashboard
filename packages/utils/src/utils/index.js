@@ -157,8 +157,9 @@ export function reorderSteps(unorderedSteps, orderedSteps) {
 
 export function isRunning(reason, status) {
   return (
-    status === 'Unknown' &&
-    (reason === 'Running' || reason === 'PipelineRunStopping')
+    status === 'running' ||
+    (status === 'Unknown' &&
+      (reason === 'Running' || reason === 'PipelineRunStopping'))
   );
 }
 
@@ -283,6 +284,15 @@ export function getClearFiltersHandler({ history, location, match }) {
     const browserURL = match.url.concat(`?${queryParams.toString()}`);
     history.push(browserURL);
   };
+}
+
+const rerunIdentifier = '-r-';
+export function getGenerateNamePrefixForRerun(name) {
+  let root = name;
+  if (name.includes(rerunIdentifier)) {
+    root = name.substring(0, name.lastIndexOf(rerunIdentifier));
+  }
+  return `${root}${rerunIdentifier}`;
 }
 
 /*

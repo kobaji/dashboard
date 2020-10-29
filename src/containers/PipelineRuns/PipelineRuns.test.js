@@ -447,7 +447,7 @@ describe('PipelineRuns container', () => {
     expect(queryByTitle(/actions/i)).toBeFalsy();
   });
 
-  it('TaskTree handles rerun event in PipelineRuns page', async () => {
+  it('handles rerun event in PipelineRuns page', async () => {
     const mockTestStore = mockStore(testStore);
     jest.spyOn(selectors, 'isReadOnly').mockImplementation(() => false);
     jest
@@ -473,10 +473,8 @@ describe('PipelineRuns container', () => {
     await waitForElement(() => getByText(/Rerun/i));
     fireEvent.click(getByText('Rerun'));
     expect(PipelineRunsAPI.rerunPipelineRun).toHaveBeenCalledTimes(1);
-    const expected = { pipelinerunname: 'pipelineRunWithSingleLabel' };
     expect(PipelineRunsAPI.rerunPipelineRun).toHaveBeenCalledWith(
-      'namespace-1',
-      expected
+      pipelineRunsTestStore.pipelineRuns.byId['pipelineRunWithSingleLabel-id']
     );
   });
 });

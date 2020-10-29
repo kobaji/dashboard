@@ -50,12 +50,12 @@ verifySupported() {
     exit 1
   fi
 
-  if ! type "kustomize" > /dev/null 2>&1; then
+  if [ -z "$VERSION" ] && ! type "kustomize" > /dev/null 2>&1; then
     echo "kustomize is required"
     exit 1
   fi
 
-  if ! type "ko" > /dev/null 2>&1; then
+  if [ -z "$VERSION" ] && ! type "ko" > /dev/null 2>&1; then
     echo "ko is required"
     exit 1
   fi
@@ -82,12 +82,6 @@ debug() {
 compile() {
   local overlay="overlays/installer"
 
-  if [ "$OPENSHIFT" == "true" ]; then
-    overlay="$overlay/openshift"
-  else
-    overlay="$overlay/k8s"
-  fi
-
   if [ "$READONLY" == "true" ]; then
     overlay="$overlay/read-only"
   else
@@ -108,10 +102,6 @@ download() {
     local url="$BASE_RELEASE_URL/latest/installer-"
   else
     local url="$BASE_RELEASE_URL/previous/$VERSION/installer-"
-  fi
-
-  if [ "$OPENSHIFT" == "true" ]; then
-    url="${url}openshift-"
   fi
 
   url="${url}tekton-dashboard-release"
@@ -149,10 +139,6 @@ setup() {
   elif [ "$OPENSHIFT" == "true" ]; then
     TRIGGERS_NAMESPACE="openshift-pipelines"
   fi
-
-  if [ -z "$LOGOUT_URL" ] && [ "$OPENSHIFT" == "true" ]; then
-    LOGOUT_URL="/oauth/sign_out"
-  fi
 }
 
 replace() {
@@ -183,7 +169,7 @@ patch() {
   replace "namespace: tekton-dashboard" "namespace: $INSTALL_NAMESPACE"
 
   if [ "$OPENSHIFT" == "true" ] && [ "$IMAGE_STREAM" == "true" ]; then
-    replace "image: github.com/tektoncd/dashboard/cmd/dashboard" "image: $INSTALL_NAMESPACE/tekton-dashboard"
+    replace "image: ko://github.com/tektoncd/dashboard/cmd/dashboard" "image: $INSTALL_NAMESPACE/tekton-dashboard"
   fi
 }
 
@@ -441,12 +427,21 @@ install() {
   kubectl apply -f $TMP_FILE
 }
 
-# uninstall invokes kubectl delete with the built manifest.
 uninstall() {
   echo "Uninstalling ..."
-  kubectl delete deployments -l=app.kubernetes.io/instance=default,app.kubernetes.io/part-of=tekton-dashboard --all-namespaces
-  kubectl api-resources --verbs=delete -o name | \
-    xargs -n 1 kubectl delete --ignore-not-found -l=app.kubernetes.io/instance=default,app.kubernetes.io/part-of=tekton-dashboard --all-namespaces
+  resourceKinds=(
+    "deployments.apps"
+    "serviceaccounts"
+    "services"
+    "customresourcedefinitions.apiextensions.k8s.io"
+    "clusterrolebindings.rbac.authorization.k8s.io"
+    "clusterroles.rbac.authorization.k8s.io"
+    "rolebindings.rbac.authorization.k8s.io"
+  )
+  for resourceKind in "${resourceKinds[@]}";do
+    echo "Deleting ${resourceKind}"
+    kubectl delete ${resourceKind} --ignore-not-found -l=app.kubernetes.io/instance=default,app.kubernetes.io/part-of=tekton-dashboard --all-namespaces
+  done
 }
 
 build() {
@@ -478,9 +473,10 @@ help () {
   echo -e ""
   echo -e "Accepted options:"
   echo -e "\t[--debug]\t\t\t\tPrints additional messages in the console"
-  echo -e "\t[--log-format]\t\t\t\tJSON or console"
-  echo -e "\t[--log-level]\t\t\t\tChange log level"
-  echo -e "\t[--version]\t\t\t\tWill download manifests for specified version or build everything using kustomize/ko"
+  echo -e "\t[--log-format <log-format>]\t\tSpecifies the log format (json or console), default is json"
+  echo -e "\t[--log-level <log-level>]\t\tSpecifies the log level (debug, info, warn, error, dpanic, panic, fatal), default is info"
+  echo -e "\t[--version <version>]\t\t\tWill download manifests for specified version or build everything using kustomize/ko"
+  echo -e "\t[--nightly]\t\t\t\tWill download manifests from the nightly releases channel"
   echo -e "\t[--csrf-secure-cookie]\t\t\tEnable secure CSRF cookie"
   echo -e "\t[--openshift]\t\t\t\tWill build manifests for openshift"
   echo -e "\t[--image-stream]\t\t\tWill generate manifests using openshift image stream"
@@ -493,7 +489,7 @@ help () {
   echo -e "\t[--ingress-url <url>]\t\t\tWill create an additional ingress with the specified url"
   echo -e "\t[--ingress-secret <secret>]\t\tWill add ssl support to the ingress"
   echo -e "\t[--stream-logs]\t\t\t\tWill enable log streaming instead of polling"
-  echo -e "\t[--external-logs]\t\t\tExternal url to fetch logs from when not available in the cluster"
+  echo -e "\t[--external-logs <logs-provider-url>]\tExternal url to fetch logs from when not available in the cluster"
   echo -e "\t[--output <file>]\t\t\tWill output built manifests in the file instead of in the console"
 }
 
@@ -548,6 +544,9 @@ while [[ $# -gt 0 ]]; do
     '--version')
       shift
       export VERSION="${1}"
+      ;;
+    '--nightly')
+      BASE_RELEASE_URL="https://storage.googleapis.com/tekton-releases-nightly/dashboard"
       ;;
     '--openshift')
       OPENSHIFT="true"

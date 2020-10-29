@@ -18,7 +18,8 @@ import { PipelineRun, Rerun } from '@tektoncd/dashboard-components';
 import {
   getTitle,
   labels as labelConstants,
-  queryParams as queryParamConstants
+  queryParams as queryParamConstants,
+  urls
 } from '@tektoncd/dashboard-utils';
 import { InlineNotification } from 'carbon-components-react';
 import { Link } from 'react-router-dom';
@@ -50,11 +51,11 @@ const { PIPELINE_TASK, RETRY, STEP, VIEW } = queryParamConstants;
 export /* istanbul ignore next */ class PipelineRunContainer extends Component {
   constructor(props) {
     super(props);
-    this.setShowRerunNotification = this.setShowRerunNotification.bind(this);
+    this.showRerunNotification = this.showRerunNotification.bind(this);
 
     this.state = {
       loading: true,
-      showRerunNotification: false
+      showRerunNotification: null
     };
   }
 
@@ -89,10 +90,6 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
     ) {
       this.fetchData({ skipLoading: websocketReconnected });
     }
-  }
-
-  setShowRerunNotification(value) {
-    this.setState({ showRerunNotification: value });
   }
 
   getSelectedTaskId(pipelineTaskName, retry) {
@@ -133,7 +130,7 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
         labels &&
         (labels[labelConstants.CONDITION_CHECK] ||
           labels[labelConstants.PIPELINE_TASK]);
-      const { podName, retriesStatus } = taskRun.status;
+      const { podName, retriesStatus } = taskRun.status || {};
       acc[uid + podName] = {
         pipelineTaskName,
         uid
@@ -189,6 +186,10 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
     history.push(browserURL);
   };
 
+  showRerunNotification(value) {
+    this.setState({ showRerunNotification: value });
+  }
+
   fetchData({ skipLoading } = {}) {
     const { match } = this.props;
     const { namespace, pipelineRunName } = match.params;
@@ -210,7 +211,6 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
       clusterTasks,
       error,
       intl,
-      match,
       pipelineRun,
       pipelineTaskName,
       retry,
@@ -242,15 +242,16 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
     }
 
     const { loading, showRerunNotification } = this.state;
-    const { pipelineRunName } = match.params;
     const selectedTaskId = this.getSelectedTaskId(pipelineTaskName, retry);
 
     const rerun = !this.props.isReadOnly && (
       <Rerun
-        pipelineRun={pipelineRun}
-        rerunPipelineRun={rerunPipelineRun}
-        runName={pipelineRunName}
-        setShowRerunNotification={this.setShowRerunNotification}
+        getURL={({ name, namespace }) =>
+          urls.pipelineRuns.byName({ namespace, pipelineRunName: name })
+        }
+        run={pipelineRun}
+        rerun={rerunPipelineRun}
+        showNotification={this.showRerunNotification}
       />
     );
 
@@ -266,7 +267,7 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
                   to={showRerunNotification.logsURL}
                 >
                   {intl.formatMessage({
-                    id: 'dashboard.pipelineRun.rerunStatusMessage',
+                    id: 'dashboard.run.rerunStatusMessage',
                     defaultMessage: 'View status'
                   })}
                 </Link>

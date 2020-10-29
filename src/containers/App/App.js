@@ -30,7 +30,12 @@ import {
   LogoutButton,
   PageErrorBoundary
 } from '@tektoncd/dashboard-components';
-import { getErrorMessage, paths, urls } from '@tektoncd/dashboard-utils';
+import {
+  ALL_NAMESPACES,
+  getErrorMessage,
+  paths,
+  urls
+} from '@tektoncd/dashboard-utils';
 
 import {
   About,
@@ -81,11 +86,9 @@ import {
   isReadOnly,
   isWebSocketConnected
 } from '../../reducers';
-import messageBundle from '../../nls/messages_en.json';
+import messages from '../../nls/messages_en.json';
 
 import '../../components/App/App.scss';
-
-const messages = messageBundle;
 
 /* istanbul ignore next */
 if (process.env.I18N_PSEUDO) {
@@ -161,7 +164,7 @@ export /* istanbul ignore next */ class App extends Component {
       }
 
       this.props.fetchExtensions({
-        namespace: this.props.tenantNamespace
+        namespace: this.props.tenantNamespace || ALL_NAMESPACES
       });
     }
   }
