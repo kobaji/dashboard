@@ -38,13 +38,16 @@ import {
   isReadOnly,
   isWebSocketConnected
 } from '../../reducers';
-import { LogDownloadButton } from '..';
 import { fetchPipelineRun } from '../../actions/pipelineRuns';
 import { fetchClusterTasks, fetchTasks } from '../../actions/tasks';
 import { fetchTaskRuns } from '../../actions/taskRuns';
 import { rerunPipelineRun } from '../../api';
 
-import { getLogsRetriever, getViewChangeHandler } from '../../utils';
+import {
+  getLogDownloadButton,
+  getLogsRetriever,
+  getViewChangeHandler
+} from '../../utils';
 
 const { PIPELINE_TASK, RETRY, STEP, VIEW } = queryParamConstants;
 
@@ -98,7 +101,7 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
       ({ metadata }) =>
         metadata.labels &&
         (metadata.labels[labelConstants.CONDITION_CHECK] === pipelineTaskName ||
-          // the `pipelineTask`` label is present on both TaskRuns (the owning
+          // the `pipelineTask` label is present on both TaskRuns (the owning
           // TaskRun and the TaskRun created for the condition check), ensure
           // we only match on the owning TaskRun here and not another condition
           (!metadata.labels[labelConstants.CONDITION_CHECK] &&
@@ -110,16 +113,12 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
     }
 
     const retryNumber = parseInt(retry, 10);
-    if (
-      !Number.isNaN(retryNumber) &&
-      taskRun.status &&
-      taskRun.status.retriesStatus
-    ) {
+    if (!Number.isNaN(retryNumber) && taskRun.status?.retriesStatus) {
       const retryStatus = taskRun.status.retriesStatus[retryNumber];
       return retryStatus && taskRun.metadata.uid + retryStatus.podName;
     }
 
-    return taskRun.metadata.uid + taskRun.status.podName;
+    return taskRun.metadata.uid + taskRun.status?.podName;
   }
 
   getSelectedTaskRun(selectedTaskId) {
@@ -288,7 +287,7 @@ export /* istanbul ignore next */ class PipelineRunContainer extends Component {
           )}
           handleTaskSelected={this.handleTaskSelected}
           loading={loading}
-          logDownloadButton={LogDownloadButton}
+          getLogDownloadButton={getLogDownloadButton}
           onViewChange={getViewChangeHandler(this.props)}
           pipelineRun={pipelineRun}
           rerun={rerun}

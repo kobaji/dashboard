@@ -17,13 +17,14 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { ALL_NAMESPACES } from '@tektoncd/dashboard-utils';
+import { renderWithIntl } from '@tektoncd/dashboard-components/src/utils/test';
 
 import TasksDropdown from './TasksDropdown';
 import * as API from '../../api/tasks';
-import { renderWithIntl, rerenderWithIntl } from '../../utils/test';
 
 const props = {
-  id: 'tasks-dropdown'
+  id: 'tasks-dropdown',
+  onChange: () => {}
 };
 
 const tasksByNamespace = {
@@ -170,11 +171,11 @@ describe('TasksDropdown', () => {
       ...namespacesStoreGreen,
       notifications: {}
     });
-    rerenderWithIntl(
-      rerender,
+    renderWithIntl(
       <Provider store={greenStore}>
         <TasksDropdown {...props} />
-      </Provider>
+      </Provider>,
+      { rerender }
     );
     // View items
     fireEvent.click(getByPlaceholderText(initialTextRegExp));
@@ -203,19 +204,19 @@ describe('TasksDropdown', () => {
     );
     expect(queryByDisplayValue(/task-1/i)).toBeTruthy();
     // Select item 'task-2'
-    rerenderWithIntl(
-      rerender,
+    renderWithIntl(
       <Provider store={store}>
         <TasksDropdown {...props} selectedItem={{ text: 'task-2' }} />
-      </Provider>
+      </Provider>,
+      { rerender }
     );
     expect(queryByDisplayValue(/task-2/i)).toBeTruthy();
     // No selected item (select item '')
-    rerenderWithIntl(
-      rerender,
+    renderWithIntl(
       <Provider store={store}>
         <TasksDropdown {...props} selectedItem="" />
-      </Provider>
+      </Provider>,
+      { rerender }
     );
     expect(queryByPlaceholderText(initialTextRegExp)).toBeTruthy();
   });

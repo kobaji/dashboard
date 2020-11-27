@@ -12,7 +12,6 @@ limitations under the License.
 */
 
 import React from 'react';
-import StoryRouter from 'storybook-react-router';
 
 import TaskRunDetails from './TaskRunDetails';
 
@@ -22,19 +21,17 @@ const params = [{ name: paramKey, value: paramValue }];
 
 export default {
   component: TaskRunDetails,
-  decorators: [
-    StoryRouter(),
-    storyFn => <div style={{ alignSelf: 'stretch' }}>{storyFn()}</div>
-  ],
   title: 'Components/TaskRunDetails'
 };
 
 export const Base = () => (
   <TaskRunDetails
     taskRun={{
-      pipelineTaskName: 'my-task',
-      params,
-      status: 'status message'
+      metadata: { name: 'my-task' },
+      spec: {
+        params
+      },
+      status: 'this will show the TaskRun.status'
     }}
   />
 );

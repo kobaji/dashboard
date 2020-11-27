@@ -22,27 +22,13 @@ describe('TaskRunDetails', () => {
     const taskRunName = 'task-run-name';
     const status = 'error';
     const { queryByText } = renderWithIntl(
-      <TaskRunDetails taskRun={{ status, taskRunName }} />
+      <TaskRunDetails
+        taskRun={{ metadata: { name: taskRunName }, spec: {}, status }}
+      />
     );
 
     expect(queryByText(taskRunName)).toBeTruthy();
     expect(queryByText(status)).toBeTruthy();
-  });
-
-  it('renders pipeline task name and inputs', () => {
-    const pipelineTaskName = 'my-pipeline-task';
-    const paramKey = 'k';
-    const paramValue = 'v';
-    const params = [{ name: paramKey, value: paramValue }];
-    const { queryByText } = renderWithIntl(
-      <TaskRunDetails
-        taskRun={{ pipelineTaskName, params, taskName: 'taskName' }}
-      />
-    );
-
-    expect(queryByText(pipelineTaskName)).toBeTruthy();
-    expect(queryByText(paramKey)).toBeTruthy();
-    expect(queryByText(paramValue)).toBeTruthy();
   });
 
   it('renders task name and inputs', () => {
@@ -52,7 +38,9 @@ describe('TaskRunDetails', () => {
     const paramValue = 'v';
     const params = [{ name: paramKey, value: paramValue }];
     const { queryByText } = renderWithIntl(
-      <TaskRunDetails taskRun={{ status, params, taskRunName }} />
+      <TaskRunDetails
+        taskRun={{ metadata: { name: taskRunName }, spec: { params }, status }}
+      />
     );
 
     expect(queryByText(taskRunName)).toBeTruthy();
@@ -62,7 +50,8 @@ describe('TaskRunDetails', () => {
 
   it('renders selected view', () => {
     const taskRun = {
-      params: [{ name: 'fake_name', value: 'fake_value' }]
+      metadata: { name: 'task-run-name' },
+      spec: { params: [{ name: 'fake_name', value: 'fake_value' }] }
     };
     const { queryByText } = renderWithIntl(
       <TaskRunDetails taskRun={taskRun} view="status" />

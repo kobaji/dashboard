@@ -17,17 +17,25 @@ import { action } from '@storybook/addon-actions';
 import Task from './Task';
 
 const props = {
-  pipelineTaskName: 'A Task',
+  displayName: 'A Task',
   onSelect: action('selected')
 };
 
 const steps = [
-  { id: 'build', stepName: 'build', reason: 'Completed' },
-  { id: 'test', stepName: 'test', reason: 'Completed' }
+  { name: 'lint', terminated: { reason: 'Completed' } },
+  { name: 'test', terminated: { reason: 'Completed' } },
+  { name: 'build', running: {} },
+  { name: 'deploy', running: {} }
 ];
 
 export default {
   component: Task,
+  decorators: [storyFn => <div style={{ width: '250px' }}>{storyFn()}</div>],
+  parameters: {
+    backgrounds: {
+      default: 'gray10'
+    }
+  },
   title: 'Components/Task'
 };
 
@@ -53,6 +61,7 @@ export const Expanded = () => {
       onSelect={(_, stepId) => setSelectedStepId(stepId)}
       selectedStepId={selectedStepId}
       expanded
+      reason="Running"
       steps={steps}
       succeeded="Unknown"
     />

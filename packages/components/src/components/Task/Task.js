@@ -12,10 +12,15 @@ limitations under the License.
 */
 
 import React, { Component } from 'react';
-import { ChevronRight16 as DefaultIcon } from '@carbon/icons-react';
+import {
+  ChevronRight20 as DefaultIcon,
+  ChevronDown20 as ExpandIcon
+} from '@carbon/icons-react';
 import { StatusIcon, Step } from '@tektoncd/dashboard-components';
-
-import { updateUnexecutedSteps } from '@tektoncd/dashboard-utils';
+import {
+  getStepStatusReason,
+  updateUnexecutedSteps
+} from '@tektoncd/dashboard-utils';
 
 import './Task.scss';
 
@@ -52,22 +57,26 @@ class Task extends Component {
     }
     if (expanded && !selectedStepId) {
       const erroredStep = steps.find(
-        step => step.reason === 'Error' || step.reason === undefined
+        step => step.terminated?.reason === 'Error' || !step.terminated
       );
-      const { id } = erroredStep || steps[0] || {};
-      this.handleStepSelected(id);
+      const { name } = erroredStep || steps[0] || {};
+      this.handleStepSelected(name);
     }
   }
 
   render() {
     const {
       expanded,
-      pipelineTaskName,
+      displayName,
       reason,
       selectedStepId,
       steps,
       succeeded
     } = this.props;
+
+    const expandIcon = expanded ? null : (
+      <ExpandIcon className="tkn--task--expand-icon" />
+    );
 
     return (
       <li
@@ -75,45 +84,45 @@ class Task extends Component {
         data-succeeded={succeeded}
         data-reason={reason}
         data-selected={(expanded && !selectedStepId) || undefined}
+        data-active={expanded || undefined}
       >
         <a
           className="tkn--task-link"
           href="#"
-          title={pipelineTaskName}
+          title={displayName}
           onClick={this.handleTaskSelected}
         >
           <StatusIcon
             DefaultIcon={DefaultIcon}
-            inverse={
-              succeeded !== 'Unknown' || (reason && reason !== 'Pending')
-            }
             reason={reason}
             status={succeeded}
           />
-          {pipelineTaskName}
+          <span className="tkn--task-link--name">{displayName}</span>
+          {expandIcon}
         </a>
         {expanded && (
           <ol className="tkn--step-list">
-            {updateUnexecutedSteps(steps).map(
-              ({ id, reason: stepReason, status, stepName }) => {
-                const selected = selectedStepId === id;
-                const stepStatus =
-                  reason === 'TaskRunCancelled' && status !== 'terminated'
-                    ? 'cancelled'
-                    : status;
-                return (
-                  <Step
-                    id={id}
-                    key={stepName}
-                    onSelect={this.handleStepSelected}
-                    reason={stepReason}
-                    selected={selected}
-                    status={stepStatus}
-                    stepName={stepName}
-                  />
-                );
-              }
-            )}
+            {updateUnexecutedSteps(steps).map(step => {
+              const { name } = step;
+              const { status, reason: stepReason } = getStepStatusReason(step);
+
+              const selected = selectedStepId === name;
+              const stepStatus =
+                reason === 'TaskRunCancelled' && status !== 'terminated'
+                  ? 'cancelled'
+                  : status;
+              return (
+                <Step
+                  id={name}
+                  key={name}
+                  onSelect={this.handleStepSelected}
+                  reason={stepReason}
+                  selected={selected}
+                  status={stepStatus}
+                  stepName={name}
+                />
+              );
+            })}
           </ol>
         )}
       </li>

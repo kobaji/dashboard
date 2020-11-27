@@ -17,13 +17,9 @@ import LogDownloadButton from './LogDownloadButton';
 
 export default {
   component: LogDownloadButton,
-  title: 'Containers/LogDownloadButton'
+  title: 'Components/LogDownloadButton'
 };
 
 export const Base = () => (
-  <LogDownloadButton
-    stepName="stepName"
-    stepStatus={{ container: 'containerName' }}
-    taskRun={{ namespace: 'namespaceName', pod: 'podName' }}
-  />
+  <LogDownloadButton name="some_filename.txt" url="/some/logs/url" />
 );

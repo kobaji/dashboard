@@ -12,44 +12,77 @@ limitations under the License.
 */
 
 import React, { useState } from 'react';
-import { text } from '@storybook/addon-knobs';
 
 import TaskTree from './TaskTree';
 
 export default {
+  args: {
+    taskRuns: [
+      {
+        metadata: {
+          labels: { 'tekton.dev/pipelineTask': 'Task 1' },
+          uid: 'task'
+        },
+        status: {
+          conditions: [
+            { reason: 'Completed', status: 'True', type: 'Succeeded' }
+          ],
+          steps: [
+            { name: 'build', terminated: { reason: 'Completed' } },
+            { name: 'test', terminated: { reason: 'Completed' } }
+          ]
+        }
+      },
+      {
+        metadata: {
+          labels: { 'tekton.dev/pipelineTask': 'Task 2' },
+          uid: 'task2'
+        },
+        status: {
+          conditions: [
+            { reason: 'Failed', status: 'False', type: 'Succeeded' }
+          ],
+          steps: [
+            { name: 'step 1', terminated: { reason: 'Error' } },
+            // The next step will be displayed as 'Not run' by the Dashboard
+            { name: 'step 2', terminated: { reason: 'Error' } }
+          ]
+        }
+      },
+      {
+        metadata: {
+          labels: { 'tekton.dev/pipelineTask': 'Task 3' },
+          uid: 'task3'
+        },
+        pipelineTaskName: 'Task 3',
+        status: {
+          conditions: [
+            { reason: 'Running', status: 'Unknown', type: 'Succeeded' }
+          ],
+          steps: [
+            { name: 'step 1', terminated: { reason: 'Completed' } },
+            { name: 'step 2', running: {} }
+          ]
+        }
+      }
+    ]
+  },
   component: TaskTree,
+  parameters: {
+    backgrounds: {
+      default: 'gray10'
+    }
+  },
   title: 'Components/TaskTree'
 };
 
-export const Base = () => {
-  const props = {
-    taskRuns: [
-      {
-        id: 'task',
-        pipelineTaskName: text('Task 1 name', 'Task 1'),
-        steps: [
-          { id: 'build', stepName: 'build' },
-          { id: 'test', stepName: 'test' }
-        ],
-        succeeded: 'Unknown'
-      },
-      {
-        id: 'task2',
-        pipelineTaskName: text('Task 2 name', 'Task 2'),
-        steps: [
-          { id: 'step 1', stepName: 'step 1' },
-          { id: 'step 2', stepName: 'step 2' }
-        ],
-        succeeded: 'Unknown'
-      }
-    ]
-  };
+export const Base = args => {
   const [selectedStepId, setSelectedStepId] = useState();
   const [selectedTaskId, setSelectedTaskId] = useState();
 
   return (
     <TaskTree
-      {...props}
+      {...args}
       onSelect={(taskId, stepId) => {
         setSelectedStepId(stepId);
         setSelectedTaskId(taskId);

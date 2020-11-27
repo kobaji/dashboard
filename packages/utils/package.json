@@ -13,12 +13,9 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@babel/cli": "^7.5.5"
+    "@babel/cli": "^7.12.1"
   },
   "peerDependencies": {
-    "history": "^4.9.0",
-    "react": "^16.8.4",
-    "react-dom": "^16.8.4",
     "react-router-dom": "^5.0.0"
   },
   "engines": {

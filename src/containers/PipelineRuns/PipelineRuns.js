@@ -16,8 +16,16 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { injectIntl } from 'react-intl';
 import isEqual from 'lodash.isequal';
-import { InlineNotification } from 'carbon-components-react';
-import { PipelineRuns as PipelineRunsList } from '@tektoncd/dashboard-components';
+import keyBy from 'lodash.keyby';
+import {
+  InlineNotification,
+  ListItem,
+  UnorderedList
+} from 'carbon-components-react';
+import {
+  Modal,
+  PipelineRuns as PipelineRunsList
+} from '@tektoncd/dashboard-components';
 import {
   getErrorMessage,
   getFilters,
@@ -27,7 +35,7 @@ import {
   labels,
   urls
 } from '@tektoncd/dashboard-utils';
-import { Add16 as Add } from '@carbon/icons-react';
+import { Add16 as Add, TrashCan32 as Delete } from '@carbon/icons-react';
 
 import { CreatePipelineRun, LabelFilter } from '..';
 import { sortRunsByStartTime } from '../../utils';
@@ -48,9 +56,11 @@ import {
 } from '../../api';
 
 const initialState = {
-  showCreatePipelineRunModal: false,
   createdPipelineRun: null,
-  submitError: ''
+  showCreatePipelineRunModal: false,
+  showDeleteModal: false,
+  submitError: '',
+  toBeDeleted: []
 };
 
 export /* istanbul ignore next */ class PipelineRuns extends Component {
@@ -85,9 +95,28 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
     }
   }
 
+  handleCreatePipelineRunSuccess(newPipelineRun) {
+    const {
+      metadata: { namespace, name }
+    } = newPipelineRun;
+    const url = urls.pipelineRuns.byName({
+      namespace,
+      pipelineRunName: name
+    });
+    this.toggleModal(false);
+    this.setState({ createdPipelineRun: { name, url } });
+  }
+
   cancel = pipelineRun => {
     const { name, namespace } = pipelineRun.metadata;
     cancelPipelineRun({ name, namespace });
+  };
+
+  closeDeleteModal = () => {
+    this.setState({
+      showDeleteModal: false,
+      toBeDeleted: []
+    });
   };
 
   deleteRun = pipelineRun => {
@@ -104,16 +133,18 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
     });
   };
 
-  resetSuccess = () => {
-    this.setState({ createdPipelineRun: false });
+  handleDelete = async () => {
+    const { cancelSelection, toBeDeleted } = this.state;
+    const deletions = toBeDeleted.map(resource => this.deleteRun(resource));
+    this.closeDeleteModal();
+    await Promise.all(deletions);
+    cancelSelection();
   };
 
-  rerun = pipelineRun => {
-    rerunPipelineRun(pipelineRun);
-  };
-
-  toggleModal = showCreatePipelineRunModal => {
-    this.setState({ showCreatePipelineRunModal });
+  openDeleteModal = (selectedRows, cancelSelection) => {
+    const pipelineRunsById = keyBy(this.props.pipelineRuns, 'metadata.uid');
+    const toBeDeleted = selectedRows.map(({ id }) => pipelineRunsById[id]);
+    this.setState({ showDeleteModal: true, toBeDeleted, cancelSelection });
   };
 
   pipelineRunActions = () => {
@@ -203,17 +234,17 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
     ];
   };
 
-  handleCreatePipelineRunSuccess(newPipelineRun) {
-    const {
-      metadata: { namespace, name }
-    } = newPipelineRun;
-    const url = urls.pipelineRuns.byName({
-      namespace,
-      pipelineRunName: name
-    });
-    this.toggleModal(false);
-    this.setState({ createdPipelineRun: { name, url } });
-  }
+  rerun = pipelineRun => {
+    rerunPipelineRun(pipelineRun);
+  };
+
+  resetSuccess = () => {
+    this.setState({ createdPipelineRun: false });
+  };
+
+  toggleModal = showCreatePipelineRunModal => {
+    this.setState({ showCreatePipelineRunModal });
+  };
 
   reset() {
     this.setState(initialState);
@@ -235,6 +266,7 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
       pipelineRuns,
       intl
     } = this.props;
+    const { showDeleteModal, toBeDeleted } = this.state;
 
     if (error) {
       return (
@@ -263,6 +295,19 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
               defaultMessage: 'Create'
             }),
             icon: Add
+          }
+        ];
+
+    const batchActionButtons = this.props.isReadOnly
+      ? []
+      : [
+          {
+            onClick: this.openDeleteModal,
+            text: intl.formatMessage({
+              id: 'dashboard.actions.deleteButton',
+              defaultMessage: 'Delete'
+            }),
+            icon: Delete
           }
         ];
 
@@ -313,12 +358,48 @@ export /* istanbul ignore next */ class PipelineRuns extends Component {
           />
         )}
         <PipelineRunsList
+          batchActionButtons={batchActionButtons}
           loading={loading && !pipelineRuns.length}
           pipelineRuns={pipelineRuns}
           pipelineRunActions={pipelineRunActions}
           selectedNamespace={selectedNamespace}
           toolbarButtons={toolbarButtons}
         />
+        {showDeleteModal ? (
+          <Modal
+            open={showDeleteModal}
+            primaryButtonText={intl.formatMessage({
+              id: 'dashboard.actions.deleteButton',
+              defaultMessage: 'Delete'
+            })}
+            secondaryButtonText={intl.formatMessage({
+              id: 'dashboard.modal.cancelButton',
+              defaultMessage: 'Cancel'
+            })}
+            modalHeading={intl.formatMessage({
+              id: 'dashboard.pipelineRuns.deleteHeading',
+              defaultMessage: 'Delete PipelineRuns'
+            })}
+            onSecondarySubmit={this.closeDeleteModal}
+            onRequestSubmit={this.handleDelete}
+            onRequestClose={this.closeDeleteModal}
+            danger
+          >
+            <p>
+              {intl.formatMessage({
+                id: 'dashboard.pipelineRuns.deleteConfirm',
+                defaultMessage:
+                  'Are you sure you want to delete these PipelineRuns?'
+              })}
+            </p>
+            <UnorderedList nested>
+              {toBeDeleted.map(pipelineRun => {
+                const { name, namespace } = pipelineRun.metadata;
+                return <ListItem key={`${name}:${namespace}`}>{name}</ListItem>;
+              })}
+            </UnorderedList>
+          </Modal>
+        ) : null}
       </>
     );
   }

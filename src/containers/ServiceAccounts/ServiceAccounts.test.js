@@ -18,8 +18,9 @@ import { Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { urls } from '@tektoncd/dashboard-utils';
+import { renderWithRouter } from '@tektoncd/dashboard-components/src/utils/test';
+
 import ServiceAccounts from '.';
-import { renderWithRouter } from '../../utils/test';
 import * as API from '../../api/serviceAccounts';
 
 const middleware = [thunk];
@@ -31,12 +32,13 @@ const byNamespace = {
   }
 };
 
+const uid = '1234567890';
 const byId = {
-  '1234567890': {
+  [uid]: {
     metadata: {
       name: 'foo-service-account',
       namespace: 'default',
-      uid: '1234567890'
+      uid
     }
   }
 };

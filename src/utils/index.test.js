@@ -16,6 +16,7 @@ import * as API from '../api';
 import {
   fetchLogs,
   followLogs,
+  getLogDownloadButton,
   getViewChangeHandler,
   isStale,
   sortRunsByStartTime,
@@ -80,9 +81,14 @@ it('isStale', () => {
 
 describe('fetchLogs', () => {
   it('should return the pod logs', () => {
+    const namespace = 'default';
+    const podName = 'pipeline-run-123456';
     const stepName = 'kubectl-apply';
     const stepStatus = { container: 'step-kubectl-apply' };
-    const taskRun = { pod: 'pipeline-run-123456', namespace: 'default' };
+    const taskRun = {
+      metadata: { namespace },
+      status: { podName }
+    };
 
     const logs = 'fake logs';
     jest.spyOn(API, 'getPodLog').mockImplementation(() => logs);
@@ -91,8 +97,8 @@ describe('fetchLogs', () => {
     expect(API.getPodLog).toHaveBeenCalledWith(
       expect.objectContaining({
         container: stepStatus.container,
-        name: taskRun.pod,
-        namespace: taskRun.namespace
+        name: podName,
+        namespace
       })
     );
     returnedLogs.then(data => {
@@ -103,7 +109,7 @@ describe('fetchLogs', () => {
   it('should not call the API when the pod is not specified', () => {
     const stepName = 'kubectl-apply';
     const stepStatus = { container: 'step-kubectl-apply' };
-    const taskRun = { namespace: 'default' };
+    const taskRun = { metadata: { namespace: 'default' } };
     jest.spyOn(API, 'getPodLog');
 
     fetchLogs(stepName, stepStatus, taskRun);
@@ -113,9 +119,14 @@ describe('fetchLogs', () => {
 
 describe('followLogs', () => {
   it('should return the pod logs', () => {
+    const namespace = 'default';
+    const podName = 'pipeline-run-123456';
     const stepName = 'kubectl-apply';
     const stepStatus = { container: 'step-kubectl-apply' };
-    const taskRun = { pod: 'pipeline-run-123456', namespace: 'default' };
+    const taskRun = {
+      metadata: { namespace },
+      status: { podName }
+    };
 
     const logs = new ReadableStream({
       start(controller) {
@@ -128,8 +139,8 @@ describe('followLogs', () => {
     expect(API.getPodLog).toHaveBeenCalledWith(
       expect.objectContaining({
         container: stepStatus.container,
-        name: taskRun.pod,
-        namespace: taskRun.namespace,
+        name: podName,
+        namespace,
         stream: true
       })
     );
@@ -141,7 +152,7 @@ describe('followLogs', () => {
   it('should not call the API when the pod is not specified', () => {
     const stepName = 'kubectl-apply';
     const stepStatus = { container: 'step-kubectl-apply' };
-    const taskRun = { namespace: 'default' };
+    const taskRun = { metadata: { namespace: 'default' } };
     jest.spyOn(API, 'getPodLog');
 
     followLogs(stepName, stepStatus, taskRun);
@@ -160,4 +171,22 @@ it('getViewChangeHandler', () => {
   expect(history.push).toHaveBeenCalledWith(
     `${url}?nonViewQueryParam=someValue&view=${view}`
   );
+});
+
+it('getLogDownloadButton', () => {
+  const container = 'fake_container';
+  const namespace = 'fake_namespace';
+  const podName = 'fake_podname';
+  const stepStatus = { container };
+  const taskRun = { metadata: { namespace }, status: { podName } };
+  jest.spyOn(API, 'getPodLogURL');
+
+  const logDownloadButton = getLogDownloadButton({ stepStatus, taskRun });
+
+  expect(API.getPodLogURL).toHaveBeenCalledWith({
+    container,
+    name: podName,
+    namespace
+  });
+  expect(logDownloadButton).toBeTruthy();
 });

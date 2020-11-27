@@ -18,13 +18,12 @@ limitations under the License.
   align-items: stretch;
   overflow: hidden;
 
-  .bx--tabs {
-    margin-top: 0.4rem;
-    min-height: 2.5rem;
-  }
-
   .bx--data-table-container th{
     width: 50%;
+  }
+
+  .bx--tab-content {
+    padding-left: 0;
   }
 
   .bx--tab-content .tkn--table .bx--data-table.bx--data-table--short {

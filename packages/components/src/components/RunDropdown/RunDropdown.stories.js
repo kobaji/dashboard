@@ -12,13 +12,20 @@ limitations under the License.
 */
 
 import React from 'react';
-import StoryRouter from 'storybook-react-router';
 
 import RunDropdown from './RunDropdown';
 
 export default {
   component: RunDropdown,
-  decorators: [StoryRouter()],
+  decorators: [
+    storyFn => (
+      <div
+        style={{ width: '200px', display: 'flex', justifyContent: 'flex-end' }}
+      >
+        {storyFn()}
+      </div>
+    )
+  ],
   title: 'Components/RunDropdown'
 };
 

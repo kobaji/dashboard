@@ -14,6 +14,8 @@ limitations under the License.
 import React from 'react';
 import PropTypes from 'prop-types';
 import { injectIntl } from 'react-intl';
+import { getStatus, getStepStatusReason } from '@tektoncd/dashboard-utils';
+
 import { DetailsHeader, StepDefinition, StepStatus, Tab, Tabs } from '..';
 
 import './StepDetails.scss';
@@ -26,16 +28,15 @@ const StepDetails = props => {
     intl,
     logContainer,
     onViewChange,
-    reason,
     showIO,
     stepName,
     stepStatus,
     taskRun,
     view
   } = props;
-  let { status } = props;
-  status =
-    taskRun.reason === 'TaskRunCancelled' && status !== 'terminated'
+  const { reason, status } = getStepStatusReason(stepStatus);
+  const statusValue =
+    getStatus(taskRun).reason === 'TaskRunCancelled' && status !== 'terminated'
       ? 'cancelled'
       : status;
 
@@ -47,9 +48,10 @@ const StepDetails = props => {
   return (
     <div className="tkn--step-details">
       <DetailsHeader
+        displayName={stepName}
         reason={reason}
-        status={status}
-        stepName={stepName}
+        status={statusValue}
+        stepStatus={stepStatus}
         taskRun={taskRun}
       />
       <Tabs
