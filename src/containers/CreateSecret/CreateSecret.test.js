@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent, waitForElement } from 'react-testing-library';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
@@ -167,23 +167,23 @@ it('Create Secret validates universal inputs', () => {
 });
 
 it('Create Secret validates access token inputs', () => {
-  const { queryByText, queryByLabelText } = renderWithIntl(
+  const { queryByText, queryAllByLabelText } = renderWithIntl(
     <Provider store={store}>
       <CreateSecret location={{ search: '?secretType=accessToken' }} />
     </Provider>
   );
-  fireEvent.click(queryByLabelText('Access Token'));
+  fireEvent.click(queryAllByLabelText('Access Token')[0]);
   fireEvent.click(queryByText('Create'));
   expect(queryByText(accessTokenValidationErrorRegExp)).toBeTruthy();
 });
 
 it('Create Secret validates password inputs', () => {
-  const { queryByText, queryByLabelText } = renderWithIntl(
+  const { queryByText, queryAllByLabelText } = renderWithIntl(
     <Provider store={store}>
       <CreateSecret {...props} />
     </Provider>
   );
-  fireEvent.click(queryByLabelText('Password'));
+  fireEvent.click(queryAllByLabelText('Password')[0]);
   fireEvent.click(queryByText('Create'));
   expect(queryByText(usernameValidationErrorRegExp)).toBeTruthy();
   expect(queryByText(passwordValidationErrorRegExp)).toBeTruthy();
@@ -343,7 +343,7 @@ it("Create Secret doesn't error when Docker Registry is selected", () => {
     queryByText,
     getByPlaceholderText,
     getByText,
-    queryByLabelText
+    queryAllByLabelText
   } = renderWithIntl(
     <Provider store={store}>
       <CreateSecret {...props} />
@@ -355,7 +355,7 @@ it("Create Secret doesn't error when Docker Registry is selected", () => {
   fireEvent.click(getByPlaceholderText(/select namespace/i));
   fireEvent.click(getByText(/default/i));
 
-  fireEvent.click(queryByLabelText('Password'));
+  fireEvent.click(queryAllByLabelText('Password')[0]);
 
   fireEvent.click(getByText(/git server/i));
   fireEvent.click(getByText(/docker registry/i));
@@ -373,7 +373,7 @@ it("Create Secret doesn't error when a username is entered", () => {
     queryByText,
     getByPlaceholderText,
     getByText,
-    queryByLabelText
+    queryAllByLabelText
   } = renderWithIntl(
     <Provider store={store}>
       <CreateSecret {...props} />
@@ -384,7 +384,7 @@ it("Create Secret doesn't error when a username is entered", () => {
   });
   fireEvent.click(getByPlaceholderText(/select namespace/i));
   fireEvent.click(getByText(/default/i));
-  fireEvent.click(queryByLabelText('Password'));
+  fireEvent.click(queryAllByLabelText('Password')[0]);
 
   fireEvent.change(getByPlaceholderText(/username/i), {
     target: { value: 'the-cat-goes-meow' }
@@ -403,7 +403,7 @@ it("Create Secret doesn't error when a password is entered", () => {
     queryByText,
     getByPlaceholderText,
     getByText,
-    queryByLabelText
+    queryAllByLabelText
   } = renderWithIntl(
     <Provider store={store}>
       <CreateSecret {...props} />
@@ -414,7 +414,7 @@ it("Create Secret doesn't error when a password is entered", () => {
   });
   fireEvent.click(getByPlaceholderText(/select namespace/i));
   fireEvent.click(getByText(/default/i));
-  fireEvent.click(queryByLabelText('Password'));
+  fireEvent.click(queryAllByLabelText('Password')[0]);
 
   fireEvent.change(getByPlaceholderText(/username/i), {
     target: { value: 'the-cat-goes-meow' }
@@ -438,7 +438,7 @@ it('Can clear the selected namespace', async () => {
     getByText,
     getByTitle,
     queryByText,
-    queryByValue
+    queryByDisplayValue
   } = renderWithIntl(
     <Provider store={store}>
       <CreateSecret {...props} />
@@ -447,6 +447,6 @@ it('Can clear the selected namespace', async () => {
   fireEvent.click(getByPlaceholderText(/select namespace/i));
   fireEvent.click(getByText('default'));
   fireEvent.click(getByTitle(/Clear selected item/i));
-  await waitForElement(() => queryByText(/namespace required/i));
-  expect(queryByValue('default')).toBeFalsy();
+  await waitFor(() => queryByText(/namespace required/i));
+  expect(queryByDisplayValue('default')).toBeFalsy();
 });

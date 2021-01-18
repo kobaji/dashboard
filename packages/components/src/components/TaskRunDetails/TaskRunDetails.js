@@ -48,17 +48,15 @@ const TaskRunDetails = props => {
     <Table
       size="short"
       headers={headers}
-      rows={params.map(({ name, value }) => {
-        return {
-          id: name,
-          name,
-          value: (
-            <span title={value}>
-              <Param>{value}</Param>
-            </span>
-          )
-        };
-      })}
+      rows={params.map(({ name, value }) => ({
+        id: name,
+        name,
+        value: (
+          <span title={value}>
+            <Param>{value}</Param>
+          </span>
+        )
+      }))}
     />
   );
 
@@ -102,7 +100,7 @@ const TaskRunDetails = props => {
               resource={
                 taskRun.status ||
                 intl.formatMessage({
-                  id: 'dashboard.taskRuns.status.pending',
+                  id: 'dashboard.taskRun.status.pending',
                   defaultMessage: 'Pending'
                 })
               }

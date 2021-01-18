@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent } from 'react-testing-library';
+import { fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
@@ -68,7 +68,8 @@ it('TriggerTemplates renders with no templates', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -81,8 +82,8 @@ it('TriggerTemplates renders with no templates', () => {
     { route: '/triggerTemplates' }
   );
 
-  expect(queryByText(/TriggerTemplates/i)).toBeTruthy();
-  expect(queryByText('No TriggerTemplates in any namespace.')).toBeTruthy();
+  expect(queryByText('TriggerTemplates')).toBeTruthy();
+  expect(queryByText('No matching TriggerTemplates found')).toBeTruthy();
 });
 
 it('TriggerTemplates renders with one template', () => {
@@ -96,7 +97,8 @@ it('TriggerTemplates renders with one template', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -110,7 +112,7 @@ it('TriggerTemplates renders with one template', () => {
   );
 
   expect(queryByText(/TriggerTemplates/i)).toBeTruthy();
-  expect(queryByText('No TriggerTemplates in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching TriggerTemplates found')).toBeFalsy();
   expect(queryByText('trigger-template')).toBeTruthy();
 });
 
@@ -125,7 +127,8 @@ it('TriggerTemplates can be filtered on a single label filter', async () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText, getByTestId, getByText } = renderWithRouter(
@@ -158,7 +161,8 @@ it('TriggerTemplates renders in loading state', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -172,5 +176,5 @@ it('TriggerTemplates renders in loading state', () => {
   );
 
   expect(queryByText(/TriggerTemplates/i)).toBeTruthy();
-  expect(queryByText('No TriggerTemplates in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching TriggerTemplates found')).toBeFalsy();
 });

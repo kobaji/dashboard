@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent, waitForElement } from 'react-testing-library';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Route } from 'react-router-dom';
 import { urls } from '@tektoncd/dashboard-utils';
@@ -49,7 +49,7 @@ const byNamespace = {
     },
     {
       metadata: {
-        uid: '0',
+        uid: '1',
         name: 'another-secret-with-label',
         namespace: 'default',
         annotations: {
@@ -133,6 +133,7 @@ const store = mockStore({
   },
   namespaces,
   notifications: {},
+  properties: {},
   serviceAccounts: {
     byId: serviceAccountsById,
     byNamespace: serviceAccountsByNamespace,
@@ -183,37 +184,6 @@ describe('Secrets', () => {
     expect(currentProps.history.push).toHaveBeenCalledWith(
       `${urls.secrets.create()}?secretType=password`
     );
-  });
-
-  it('click delete secret & modal appears', () => {
-    const currentProps = {
-      secrets: [
-        {
-          name: 'github-repo-access-secret',
-          annotations: {
-            'tekton.dev/git-0': 'https://github.ibm.com'
-          }
-        }
-      ]
-    };
-
-    const { getByTestId, getByText, queryByTestId } = renderWithRouter(
-      <Provider store={store}>
-        <Route
-          path={urls.secrets.all()}
-          render={props => <Secrets {...props} {...currentProps} />}
-        />
-      </Provider>,
-      { route: urls.secrets.all() }
-    );
-
-    expect(queryByTestId('deleteModal')).toBeFalsy();
-
-    fireEvent.click(getByText('Delete'));
-
-    expect(
-      getByTestId('deleteModal').className.includes('is-visible')
-    ).toBeTruthy();
   });
 
   it('renders with one secret', () => {
@@ -313,7 +283,7 @@ describe('Secrets', () => {
       </Provider>,
       { route: urls.secrets.all() }
     );
-    await waitForElement(() => queryByText(/github-repo-access-secret/i));
+    await waitFor(() => queryByText(/github-repo-access-secret/i));
     expect(queryByText('Create')).toBeFalsy();
   });
 
@@ -329,7 +299,7 @@ describe('Secrets', () => {
       </Provider>,
       { route: urls.secrets.all() }
     );
-    await waitForElement(() => queryByText(/github-repo-access-secret/i));
-    expect(queryByText(/create/i)).toBeTruthy();
+    await waitFor(() => queryByText(/github-repo-access-secret/i));
+    expect(queryByText('Create')).toBeTruthy();
   });
 });

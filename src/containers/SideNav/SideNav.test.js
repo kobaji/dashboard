@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -15,8 +15,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import { fireEvent, waitForElement } from 'react-testing-library';
-import { ALL_NAMESPACES, paths, urls } from '@tektoncd/dashboard-utils';
+import { waitFor } from '@testing-library/react';
 import { renderWithRouter } from '@tektoncd/dashboard-components/src/utils/test';
 
 import SideNavContainer, { SideNavWithIntl as SideNav } from './SideNav';
@@ -24,6 +23,7 @@ import SideNavContainer, { SideNavWithIntl as SideNav } from './SideNav';
 it('SideNav renders with extensions', () => {
   const middleware = [thunk];
   const mockStore = configureStore(middleware);
+  const namespace = 'default';
   const store = mockStore({
     extensions: {
       byName: {
@@ -37,21 +37,28 @@ it('SideNav renders with extensions', () => {
           apiVersion: 'v1alpha1',
           displayName: 'dashboard_crd_extension',
           extensionType: 'kubernetes-resource',
-          name: 'crd-extension',
-          url: 'crd-sample'
+          name: 'crd-extension'
+        },
+        'cluster-crd-extension': {
+          apiGroup: 'mygroup',
+          apiVersion: 'v1alpha1',
+          displayName: 'dashboard_cluster_crd_extension',
+          extensionType: 'kubernetes-resource',
+          name: 'cluster-crd-extension',
+          namespaced: false
         }
       }
     },
-    namespaces: { byName: {} },
+    namespaces: { byName: { [namespace]: true }, selected: namespace },
     properties: {}
   });
   const { queryByText } = renderWithRouter(
     <Provider store={store}>
-      <SideNavContainer />
+      <SideNavContainer location={{ search: '' }} />
     </Provider>
   );
-  expect(queryByText(/pipelines/i)).toBeTruthy();
-  expect(queryByText(/tasks/i)).toBeTruthy();
+  expect(queryByText('Pipelines')).toBeTruthy();
+  expect(queryByText('Tasks')).toBeTruthy();
   expect(queryByText(/tekton_dashboard_extension/i)).toBeTruthy();
   expect(queryByText(/dashboard_crd_extension/i)).toBeTruthy();
 });
@@ -69,15 +76,15 @@ it('SideNav renders with triggers', async () => {
   });
   const { queryByText } = renderWithRouter(
     <Provider store={store}>
-      <SideNavContainer />
+      <SideNavContainer location={{ search: '' }} />
     </Provider>
   );
-  await waitForElement(() => queryByText(/about/i));
-  expect(queryByText(/pipelines/i)).toBeTruthy();
-  expect(queryByText(/tasks/i)).toBeTruthy();
-  await waitForElement(() => queryByText(/eventlisteners/i));
-  expect(queryByText(/triggertemplates/i)).toBeTruthy();
-  expect(queryByText(/triggerbindings/i)).toBeTruthy();
+  await waitFor(() => queryByText(/about/i));
+  expect(queryByText('Pipelines')).toBeTruthy();
+  expect(queryByText('Tasks')).toBeTruthy();
+  await waitFor(() => queryByText('EventListeners'));
+  expect(queryByText('TriggerTemplates')).toBeTruthy();
+  expect(queryByText('TriggerBindings')).toBeTruthy();
 });
 
 it('SideNav selects namespace based on URL', () => {
@@ -93,6 +100,7 @@ it('SideNav selects namespace based on URL', () => {
     <Provider store={store}>
       <SideNav
         extensions={[]}
+        location={{ search: '' }}
         match={{ params: { namespace } }}
         selectNamespace={selectNamespace}
       />
@@ -106,6 +114,7 @@ it('SideNav selects namespace based on URL', () => {
     <Provider store={store}>
       <SideNav
         extensions={[]}
+        location={{ search: '' }}
         match={{ params: { namespace: updatedNamespace } }}
         selectNamespace={selectNamespace}
       />
@@ -118,6 +127,7 @@ it('SideNav selects namespace based on URL', () => {
     <Provider store={store}>
       <SideNav
         extensions={[]}
+        location={{ search: '' }}
         match={{ params: { namespace: updatedNamespace } }}
         selectNamespace={selectNamespace}
       />
@@ -125,512 +135,6 @@ it('SideNav selects namespace based on URL', () => {
     { rerender }
   );
   expect(selectNamespace).toHaveBeenCalledTimes(2);
-});
-
-it('SideNav selects namespace when no namespace in URL', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const otherNamespace = 'foo';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true,
-        [otherNamespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(otherNamespace));
-  expect(selectNamespace).toHaveBeenCalledWith(otherNamespace);
-});
-
-it('SideNav redirects to root when all namespaces selected on namespaced URL', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{ params: { namespace }, url: '/someResource' }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith('/');
-});
-
-it('SideNav redirects to PipelineRuns page when all namespaces selected on namespaced URL on PipelineRuns', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{ params: { namespace }, url: urls.pipelineRuns.all() }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.pipelineRuns.all());
-});
-
-it('SideNav redirects to TaskRuns page when all namespaces selected on namespaced URL on TaskRuns', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{ params: { namespace }, url: urls.taskRuns.all() }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.taskRuns.all());
-});
-
-it('SideNav redirects to PipelineResources page when all namespaces selected on namespaced URL on PipelineResources', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.pipelineResources.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.pipelineResources.all());
-});
-
-it('SideNav redirects to Pipelines page when all namespaces selected on namespaced URL on Pipelines', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.pipelines.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.pipelines.all());
-});
-
-it('SideNav redirects to ServiceAccounts page when all namespaces selected on namespaced URL on ServiceAccounts', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.serviceAccounts.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.serviceAccounts.all());
-});
-
-it('SideNav redirects to EventListeners page when all namespaces selected on namespaced URL on EventListeners', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.eventListeners.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.eventListeners.all());
-});
-
-it('SideNav redirects to TriggerBindings page when all namespaces selected on namespaced URL on TriggerBindings', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.triggerBindings.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.triggerBindings.all());
-});
-
-it('SideNav redirects to TriggerTemplates page when all namespaces selected on namespaced URL on TriggerTemplates', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.triggerTemplates.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.triggerTemplates.all());
-});
-
-it('SideNav redirects to Tasks page when all namespaces selected on namespaced URL on Tasks', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.tasks.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.tasks.all());
-});
-
-it('SideNav redirects to secrets page when all namespaces selected on namespaced URL on secrets', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.secrets.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.secrets.all());
-});
-
-it('SideNav redirects to Conditions page when all namespaces selected on namespaced URL on Conditions', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          url: urls.conditions.all()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(/all namespaces/i));
-  expect(selectNamespace).toHaveBeenCalledWith(ALL_NAMESPACES);
-  expect(push).toHaveBeenCalledWith(urls.conditions.all());
-});
-
-it('SideNav updates namespace in URL', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const namespace = 'default';
-  const otherNamespace = 'foo';
-  const store = mockStore({
-    namespaces: {
-      byName: {
-        [namespace]: true,
-        [otherNamespace]: true
-      },
-      isFetching: false,
-      selected: namespace
-    },
-    properties: {}
-  });
-  const selectNamespace = jest.fn();
-  const push = jest.fn();
-  const { getByText, getByValue } = renderWithRouter(
-    <Provider store={store}>
-      <SideNav
-        extensions={[]}
-        history={{ push }}
-        location={{ search: '' }}
-        match={{
-          params: { namespace },
-          path: paths.pipelines.byNamespace()
-        }}
-        namespace={namespace}
-        selectNamespace={selectNamespace}
-      />
-    </Provider>
-  );
-  selectNamespace.mockClear();
-  fireEvent.click(getByValue(namespace));
-  fireEvent.click(getByText(otherNamespace));
-  expect(selectNamespace).not.toHaveBeenCalled();
-  expect(push).toHaveBeenCalledWith(expect.stringContaining(otherNamespace));
 });
 
 it('SideNav renders import in not read-only mode', async () => {
@@ -643,10 +147,10 @@ it('SideNav renders import in not read-only mode', async () => {
   });
   const { queryByText } = renderWithRouter(
     <Provider store={store}>
-      <SideNavContainer />
+      <SideNavContainer location={{ search: '' }} />
     </Provider>
   );
-  await waitForElement(() => queryByText(/Import/i));
+  await waitFor(() => queryByText(/Import/i));
 });
 
 it('SideNav does not render import in read-only mode', async () => {
@@ -661,45 +165,9 @@ it('SideNav does not render import in read-only mode', async () => {
   });
   const { queryByText } = renderWithRouter(
     <Provider store={store}>
-      <SideNavContainer isReadOnly />
+      <SideNavContainer isReadOnly location={{ search: '' }} />
     </Provider>
   );
-  await waitForElement(() => queryByText(/about/i));
+  await waitFor(() => queryByText(/about/i));
   expect(queryByText(/import/i)).toBeFalsy();
-});
-
-it('Namespace dropdown does not render in single namespace visibility mode', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const store = mockStore({
-    extensions: { byName: {} },
-    namespaces: { byName: {} },
-    properties: {
-      TenantNamespace: 'fake'
-    }
-  });
-  const { queryByText } = renderWithRouter(
-    <Provider store={store}>
-      <SideNavContainer isReadOnly />
-    </Provider>
-  );
-  await waitForElement(() => queryByText(/about/i));
-  expect(queryByText(/namespaces/i)).toBeFalsy();
-});
-
-it('Namespace dropdown renders in full cluster visibility mode', async () => {
-  const middleware = [thunk];
-  const mockStore = configureStore(middleware);
-  const store = mockStore({
-    extensions: { byName: {} },
-    namespaces: { byName: {} },
-    properties: {}
-  });
-  const { queryByText } = renderWithRouter(
-    <Provider store={store}>
-      <SideNavContainer isReadOnly />
-    </Provider>
-  );
-  await waitForElement(() => queryByText(/about/i));
-  expect(queryByText(/namespace/i)).toBeTruthy();
 });

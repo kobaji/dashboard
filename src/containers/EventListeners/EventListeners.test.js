@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent } from 'react-testing-library';
+import { fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
@@ -68,7 +68,8 @@ it('EventListeners renders with no bindings', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { getByText } = renderWithRouter(
@@ -82,7 +83,7 @@ it('EventListeners renders with no bindings', () => {
   );
 
   expect(getByText('EventListeners')).toBeTruthy();
-  expect(getByText('No EventListeners in any namespace.')).toBeTruthy();
+  expect(getByText('No matching EventListeners found')).toBeTruthy();
 });
 
 it('EventListeners renders with one binding', () => {
@@ -96,7 +97,8 @@ it('EventListeners renders with one binding', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText, queryByTitle } = renderWithRouter(
@@ -110,7 +112,7 @@ it('EventListeners renders with one binding', () => {
   );
 
   expect(queryByText('EventListeners')).toBeTruthy();
-  expect(queryByText('No EventListeners in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching EventListeners found')).toBeFalsy();
   expect(queryByText('event-listener')).toBeTruthy();
   expect(queryByTitle('event-listener')).toBeTruthy();
 });
@@ -126,7 +128,8 @@ it('EventListeners can be filtered on a single label filter', async () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { getByTestId, getByText, queryByText } = renderWithRouter(
@@ -159,7 +162,8 @@ it('EventListeners renders in loading state', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -173,6 +177,6 @@ it('EventListeners renders in loading state', () => {
   );
 
   expect(queryByText(/EventListeners/i)).toBeTruthy();
-  expect(queryByText('No EventListeners in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching EventListeners found')).toBeFalsy();
   expect(queryByText('event-listeners')).toBeFalsy();
 });

@@ -13,7 +13,9 @@ limitations under the License.
 
 @import '~carbon-components/scss/globals/scss/typography';
 
-.tkn--pipeline-run-header {
+header.tkn--pipeline-run-header {
+  @include type-style('body-short-01');
+  line-height: 1;
   background: white;
   margin-bottom: 2em;
   padding: .4em 0 .4em 1.5em;
@@ -24,7 +26,7 @@ limitations under the License.
     width: 15rem;
   }
 
-  h1 {
+  h1.tkn--run-header--heading {
     @include type-style('productive-heading-04');
     display: flex;
     align-items: baseline;
@@ -69,11 +71,6 @@ limitations under the License.
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    button {
-      position: relative;
-      background-color: inherit;
     }
   }
 

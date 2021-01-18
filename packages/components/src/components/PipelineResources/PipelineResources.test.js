@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent, waitForElement } from 'react-testing-library';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { TrashCan32 as Delete } from '@carbon/icons-react';
 import { renderWithIntl, renderWithRouter } from '../../utils/test';
 import PipelineResources from './PipelineResources';
@@ -21,8 +21,8 @@ it('PipelineResources renders empty state', () => {
   const { queryByText } = renderWithIntl(
     <PipelineResources pipelineResources={[]} />
   );
-  expect(queryByText(/no pipelineresources/i)).toBeTruthy();
-  expect(queryByText(/namespace/i)).toBeTruthy();
+  expect(queryByText(/no matching pipelineresources/i)).toBeTruthy();
+  expect(queryByText('Namespace')).toBeTruthy();
 });
 
 it('PipelineResources renders headers state', () => {
@@ -30,7 +30,7 @@ it('PipelineResources renders headers state', () => {
     <PipelineResources pipelineResources={[]} />
   );
   expect(queryByText(/pipelineresources/i)).toBeTruthy();
-  expect(queryByText(/namespace/i)).toBeTruthy();
+  expect(queryByText('Namespace')).toBeTruthy();
   expect(queryByText(/type/i)).toBeTruthy();
   expect(document.getElementsByClassName('bx--overflow-menu')).toBeTruthy();
 });
@@ -75,7 +75,7 @@ it('PipelineResources renders correct data', async () => {
   expect(queryByText(pipelineResourceName)).toBeTruthy();
   expect(queryByText(/default-namespace/i)).toBeTruthy();
   expect(queryByText(/git/i)).toBeTruthy();
-  fireEvent.click(await waitForElement(() => getByLabelText(/select row/i)));
-  await waitForElement(() => getByText(/Delete/i));
+  fireEvent.click(await waitFor(() => getByLabelText(/select row/i)));
+  await waitFor(() => getByText(/Delete/i));
   expect(getByText(/1 item selected/i)).toBeTruthy();
 });

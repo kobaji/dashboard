@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent } from 'react-testing-library';
+import { fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
@@ -68,7 +68,8 @@ it('TriggerBindings renders with no bindings', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { getByText } = renderWithRouter(
@@ -82,7 +83,7 @@ it('TriggerBindings renders with no bindings', () => {
   );
 
   expect(getByText('TriggerBindings')).toBeTruthy();
-  expect(getByText('No TriggerBindings in any namespace.')).toBeTruthy();
+  expect(getByText('No matching TriggerBindings found')).toBeTruthy();
 });
 
 it('TriggerBindings renders with one binding', () => {
@@ -96,7 +97,8 @@ it('TriggerBindings renders with one binding', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -110,7 +112,7 @@ it('TriggerBindings renders with one binding', () => {
   );
 
   expect(queryByText('TriggerBindings')).toBeTruthy();
-  expect(queryByText('No TriggerBindings in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching TriggerBindings found')).toBeFalsy();
   expect(queryByText('trigger-binding')).toBeTruthy();
 });
 
@@ -125,7 +127,8 @@ it('TriggerBindings can be filtered on a single label filter', async () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText, getByTestId, getByText } = renderWithRouter(
@@ -158,7 +161,8 @@ it('TriggerBindings renders in loading state', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -172,6 +176,6 @@ it('TriggerBindings renders in loading state', () => {
   );
 
   expect(queryByText(/TriggerBindings/i)).toBeTruthy();
-  expect(queryByText('No TriggerBindings in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching TriggerBindings found')).toBeFalsy();
   expect(queryByText('trigger-bindings')).toBeFalsy();
 });

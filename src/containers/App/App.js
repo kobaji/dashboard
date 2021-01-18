@@ -45,7 +45,9 @@ import {
   Condition,
   Conditions,
   CreatePipelineResource,
+  CreatePipelineRun,
   CreateSecret,
+  CreateTaskRun,
   CustomResourceDefinition,
   EventListener,
   EventListeners,
@@ -88,7 +90,7 @@ import {
 } from '../../reducers';
 import messages from '../../nls/messages_en.json';
 
-import '../../components/App/App.scss';
+import '../../scss/App.scss';
 
 /* istanbul ignore next */
 if (process.env.I18N_PSEUDO) {
@@ -110,6 +112,7 @@ if (process.env.I18N_PSEUDO) {
   });
 }
 
+/* istanbul ignore next */
 const ConfigErrorComponent = ({ intl, loadingConfigError }) => {
   if (!loadingConfigError) {
     return null;
@@ -131,6 +134,7 @@ const ConfigErrorComponent = ({ intl, loadingConfigError }) => {
 const ConfigError = injectIntl(ConfigErrorComponent);
 
 const initialState = {
+  isSideNavExpanded: true,
   loadingConfigError: null,
   loadingConfig: true,
   showLoadingState: true
@@ -190,7 +194,11 @@ export /* istanbul ignore next */ class App extends Component {
 
   render() {
     const { extensions } = this.props;
-    const { loadingConfigError, showLoadingState } = this.state;
+    const {
+      isSideNavExpanded,
+      loadingConfigError,
+      showLoadingState
+    } = this.state;
 
     const lang = messages[this.props.lang] ? this.props.lang : 'en';
     const logoutButton = (
@@ -205,12 +213,22 @@ export /* istanbul ignore next */ class App extends Component {
         {!showLoadingState && (
           <Router>
             <>
-              <Header logoutButton={logoutButton} />
+              <Header
+                isSideNavExpanded={isSideNavExpanded}
+                logoutButton={logoutButton}
+                onHeaderMenuButtonClick={() => {
+                  this.setState(
+                    ({ isSideNavExpanded: prevIsSideNavExpanded }) => ({
+                      isSideNavExpanded: !prevIsSideNavExpanded
+                    })
+                  );
+                }}
+              />
               <Route path={paths.byNamespace({ path: '/*' })}>
-                {props => <SideNav {...props} />}
+                {props => <SideNav {...props} expanded={isSideNavExpanded} />}
               </Route>
 
-              <Content>
+              <Content id="main-content" className="tkn--main-content">
                 <PageErrorBoundary>
                   <Switch>
                     <Route
@@ -222,6 +240,12 @@ export /* istanbul ignore next */ class App extends Component {
                       path={paths.pipelines.byNamespace()}
                       exact
                       component={Pipelines}
+                    />
+                    <ReadWriteRoute
+                      isReadOnly={this.props.isReadOnly}
+                      path={paths.pipelineRuns.create()}
+                      exact
+                      component={CreatePipelineRun}
                     />
                     <Route
                       path={paths.pipelineRuns.all()}
@@ -268,6 +292,12 @@ export /* istanbul ignore next */ class App extends Component {
                       path={paths.tasks.byNamespace()}
                       exact
                       component={Tasks}
+                    />
+                    <ReadWriteRoute
+                      isReadOnly={this.props.isReadOnly}
+                      path={paths.taskRuns.create()}
+                      exact
+                      component={CreateTaskRun}
                     />
                     <Route path={paths.taskRuns.all()} component={TaskRuns} />
                     <Route

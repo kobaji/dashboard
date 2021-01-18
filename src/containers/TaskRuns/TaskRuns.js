@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -13,31 +13,32 @@ limitations under the License.
 
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { injectIntl } from 'react-intl';
 import isEqual from 'lodash.isequal';
 import keyBy from 'lodash.keyby';
+import { InlineNotification } from 'carbon-components-react';
 import {
-  InlineNotification,
-  ListItem,
-  UnorderedList
-} from 'carbon-components-react';
-import {
-  Modal,
+  DeleteModal,
+  StatusFilterDropdown,
   TaskRuns as TaskRunsList
 } from '@tektoncd/dashboard-components';
 import {
+  ALL_NAMESPACES,
+  generateId,
   getErrorMessage,
   getFilters,
   getStatus,
+  getStatusFilter,
+  getStatusFilterHandler,
   getTitle,
   isRunning,
   labels,
+  runMatchesStatusFilter,
   urls
 } from '@tektoncd/dashboard-utils';
 import { Add16 as Add, TrashCan32 as Delete } from '@carbon/icons-react';
 
-import { CreateTaskRun, LabelFilter } from '..';
+import { ListPageLayout } from '..';
 import { sortRunsByStartTime } from '../../utils';
 import { fetchTaskRuns } from '../../actions/taskRuns';
 
@@ -52,25 +53,15 @@ import {
 import { cancelTaskRun, deleteTaskRun, rerunTaskRun } from '../../api';
 
 const initialState = {
-  createdTaskRun: null,
-  showCreateTaskRunModal: false,
+  deleteError: null,
   showDeleteModal: false,
-  submitError: '',
   toBeDeleted: []
 };
 
 const { CLUSTER_TASK, TASK } = labels;
 
 export /* istanbul ignore next */ class TaskRuns extends Component {
-  constructor(props) {
-    super(props);
-
-    this.handleCreateTaskRunSuccess = this.handleCreateTaskRunSuccess.bind(
-      this
-    );
-
-    this.state = initialState;
-  }
+  state = initialState;
 
   componentDidMount() {
     document.title = getTitle({ page: 'TaskRuns' });
@@ -91,18 +82,6 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
     } else if (webSocketConnected && prevWebSocketConnected === false) {
       this.fetchTaskRuns();
     }
-  }
-
-  handleCreateTaskRunSuccess(newTaskRun) {
-    const {
-      metadata: { namespace, name }
-    } = newTaskRun;
-    const url = urls.taskRuns.byName({
-      namespace,
-      taskRunName: name
-    });
-    this.toggleModal(false);
-    this.setState({ createdTaskRun: { name, url } });
   }
 
   cancel = taskRun => {
@@ -126,7 +105,7 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
         if (text) {
           errorMessage = `${text} (error code ${statusCode})`;
         }
-        this.setState({ submitError: errorMessage });
+        this.setState({ deleteError: errorMessage });
       });
     });
   };
@@ -147,10 +126,6 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
 
   rerun = taskRun => {
     rerunTaskRun(taskRun);
-  };
-
-  resetSuccess = () => {
-    this.setState({ createdTaskRun: false });
   };
 
   taskRunActions = () => {
@@ -207,10 +182,13 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
         },
         modalProperties: {
           danger: true,
-          heading: intl.formatMessage({
-            id: 'dashboard.deleteTaskRun.heading',
-            defaultMessage: 'Delete TaskRun'
-          }),
+          heading: intl.formatMessage(
+            {
+              id: 'dashboard.deleteResources.heading',
+              defaultMessage: 'Delete {kind}'
+            },
+            { kind: 'TaskRuns' }
+          ),
           primaryButtonText: intl.formatMessage({
             id: 'dashboard.actions.deleteButton',
             defaultMessage: 'Delete'
@@ -241,10 +219,6 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
     ];
   };
 
-  toggleModal = showCreateTaskRunModal => {
-    this.setState({ showCreateTaskRunModal });
-  };
-
   reset() {
     this.setState(initialState);
   }
@@ -271,8 +245,11 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
   render() {
     const {
       error,
+      kind,
       loading,
       namespace: selectedNamespace,
+      statusFilter,
+      taskName,
       taskRuns,
       intl
     } = this.props;
@@ -299,7 +276,11 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
       ? []
       : [
           {
-            onClick: () => this.toggleModal(true),
+            onClick: () =>
+              this.props.history.push(
+                urls.taskRuns.create() +
+                  (taskName ? `?taskName=${taskName}&kind=${kind}` : '')
+              ),
             text: intl.formatMessage({
               id: 'dashboard.actions.createButton',
               defaultMessage: 'Create'
@@ -321,97 +302,58 @@ export /* istanbul ignore next */ class TaskRuns extends Component {
           }
         ];
 
+    const filters = (
+      <StatusFilterDropdown
+        id={generateId('status-filter-')}
+        initialSelectedStatus={statusFilter}
+        onChange={({ selectedItem }) => {
+          this.props.setStatusFilter(selectedItem.id);
+        }}
+      />
+    );
+
     return (
-      <>
-        {this.state.createdTaskRun && (
-          <InlineNotification
-            kind="success"
-            title={intl.formatMessage({
-              id: 'dashboard.taskRuns.createSuccess',
-              defaultMessage: 'Successfully created TaskRun'
-            })}
-            subtitle={
-              <Link to={this.state.createdTaskRun.url}>
-                {this.state.createdTaskRun.name}
-              </Link>
-            }
-            onCloseButtonClick={this.resetSuccess}
-            lowContrast
-          />
-        )}
-        {this.state.submitError && (
+      <ListPageLayout title="TaskRuns" {...this.props}>
+        {this.state.deleteError && (
           <InlineNotification
             kind="error"
             title={intl.formatMessage({
               id: 'dashboard.error.title',
               defaultMessage: 'Error:'
             })}
-            subtitle={getErrorMessage(this.state.submitError)}
+            subtitle={getErrorMessage(this.state.deleteError)}
             iconDescription={intl.formatMessage({
               id: 'dashboard.notification.clear',
               defaultMessage: 'Clear Notification'
             })}
             data-testid="errorNotificationComponent"
-            onCloseButtonClick={this.props.clearNotification}
+            onCloseButtonClick={() => {
+              this.setState({ deleteError: null });
+            }}
             lowContrast
-          />
-        )}
-        <h1>TaskRuns</h1>
-        <LabelFilter {...this.props} />
-        {!this.props.isReadOnly && (
-          <CreateTaskRun
-            open={this.state.showCreateTaskRunModal}
-            onClose={() => this.toggleModal(false)}
-            onSuccess={this.handleCreateTaskRunSuccess}
-            taskRef={this.props.taskName}
-            namespace={selectedNamespace}
-            kind={this.props.kind}
           />
         )}
         <TaskRunsList
           batchActionButtons={batchActionButtons}
+          filters={filters}
           loading={loading && !taskRuns.length}
           selectedNamespace={selectedNamespace}
-          taskRuns={taskRuns}
+          taskRuns={taskRuns.filter(run => {
+            return runMatchesStatusFilter({ run, statusFilter });
+          })}
           taskRunActions={taskRunActions}
           toolbarButtons={toolbarButtons}
         />
         {showDeleteModal ? (
-          <Modal
-            open={showDeleteModal}
-            primaryButtonText={intl.formatMessage({
-              id: 'dashboard.actions.deleteButton',
-              defaultMessage: 'Delete'
-            })}
-            secondaryButtonText={intl.formatMessage({
-              id: 'dashboard.modal.cancelButton',
-              defaultMessage: 'Cancel'
-            })}
-            modalHeading={intl.formatMessage({
-              id: 'dashboard.taskRuns.deleteHeading',
-              defaultMessage: 'Delete TaskRuns'
-            })}
-            onSecondarySubmit={this.closeDeleteModal}
-            onRequestSubmit={this.handleDelete}
-            onRequestClose={this.closeDeleteModal}
-            danger
-          >
-            <p>
-              {intl.formatMessage({
-                id: 'dashboard.taskRuns.deleteConfirm',
-                defaultMessage:
-                  'Are you sure you want to delete these TaskRuns?'
-              })}
-            </p>
-            <UnorderedList nested>
-              {toBeDeleted.map(taskRun => {
-                const { name, namespace } = taskRun.metadata;
-                return <ListItem key={`${name}:${namespace}`}>{name}</ListItem>;
-              })}
-            </UnorderedList>
-          </Modal>
+          <DeleteModal
+            kind="TaskRuns"
+            onClose={this.closeDeleteModal}
+            onSubmit={this.handleDelete}
+            resources={toBeDeleted}
+            showNamespace={selectedNamespace === ALL_NAMESPACES}
+          />
         ) : null}
-      </>
+      </ListPageLayout>
     );
   }
 }
@@ -424,6 +366,7 @@ TaskRuns.defaultProps = {
 function mapStateToProps(state, props) {
   const { namespace: namespaceParam } = props.match.params;
   const filters = getFilters(props.location);
+  const statusFilter = getStatusFilter(props.location);
   const namespace = namespaceParam || getSelectedNamespace(state);
 
   const taskFilter = filters.find(f => f.indexOf(`${TASK}=`) !== -1) || '';
@@ -458,6 +401,8 @@ function mapStateToProps(state, props) {
     filters,
     taskName,
     kind,
+    setStatusFilter: getStatusFilterHandler(props),
+    statusFilter,
     taskRuns,
     webSocketConnected: isWebSocketConnected(state)
   };

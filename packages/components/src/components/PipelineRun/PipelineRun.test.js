@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { waitForElement } from 'react-testing-library';
+import { waitFor } from '@testing-library/react';
 import PipelineRun from './PipelineRun';
 import { renderWithIntl } from '../../utils/test';
 
@@ -20,12 +20,12 @@ it('PipelineRunContainer renders', async () => {
   const { getByText } = renderWithIntl(
     <PipelineRun error={null} loading={false} />
   );
-  await waitForElement(() => getByText('PipelineRun not found'));
+  await waitFor(() => getByText('PipelineRun not found'));
 });
 
 it('PipelineRunContainer handles error state', async () => {
   const { getByText } = renderWithIntl(<PipelineRun error="Error" />);
-  await waitForElement(() => getByText('Error loading PipelineRun'));
+  await waitFor(() => getByText('Error loading PipelineRun'));
 });
 
 it('PipelineRunContainer handles init step failures', async () => {
@@ -36,7 +36,8 @@ it('PipelineRunContainer handles init step failures', async () => {
   const taskRun = {
     metadata: {
       name: taskRunName,
-      labels: {}
+      labels: {},
+      uid: '41deea80-53bc-4500-a20e-3b18549e23ab'
     },
     spec: {
       params: {},
@@ -73,7 +74,7 @@ it('PipelineRunContainer handles init step failures', async () => {
       tasks={[]}
     />
   );
-  await waitForElement(() => getByText(initStepName));
+  await waitFor(() => getByText(initStepName));
 });
 
 it('PipelineRunContainer handles init step failures for retry', async () => {
@@ -84,7 +85,8 @@ it('PipelineRunContainer handles init step failures for retry', async () => {
   const taskRun = {
     metadata: {
       labels: {},
-      name: taskRunName
+      name: taskRunName,
+      uid: 'b4402feb-69fe-4a5a-a0c2-5e390aa58894'
     },
     spec: {
       params: {},
@@ -95,6 +97,13 @@ it('PipelineRunContainer handles init step failures for retry', async () => {
       taskSpec: {}
     },
     status: {
+      conditions: [
+        {
+          type: 'Succeeded',
+          status: 'False'
+        }
+      ],
+      podName: 'taskrun-pod-name',
       steps: [
         {
           name: initStepName,
@@ -104,6 +113,7 @@ it('PipelineRunContainer handles init step failures for retry', async () => {
       retriesStatus: [
         {
           status: {
+            podName: 'retry-pod-name',
             steps: [
               {
                 name: initStepName,
@@ -152,6 +162,7 @@ it('PipelineRunContainer handles init step failures for retry', async () => {
     <TestWrapper>
       {({ handleTaskSelected, selectedStepId, selectedTaskId }) => (
         <PipelineRun
+          fetchLogs={() => {}}
           handleTaskSelected={handleTaskSelected}
           pipelineRun={pipelineRun}
           selectedStepId={selectedStepId}
@@ -162,6 +173,6 @@ it('PipelineRunContainer handles init step failures for retry', async () => {
       )}
     </TestWrapper>
   );
-  await waitForElement(() => getByText(/(retry 1)/));
-  await waitForElement(() => getByText(initStepName));
+  await waitFor(() => getByText(/(retry 1)/));
+  await waitFor(() => getByText(initStepName, { selector: '.tkn--step-name' }));
 });

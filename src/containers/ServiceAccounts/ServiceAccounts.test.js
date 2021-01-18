@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent } from 'react-testing-library';
+import { fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
@@ -67,7 +67,8 @@ it('ServiceAccounts renders with no bindings', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { getByText } = renderWithRouter(
@@ -81,7 +82,7 @@ it('ServiceAccounts renders with no bindings', () => {
   );
 
   expect(getByText('ServiceAccounts')).toBeTruthy();
-  expect(getByText('No ServiceAccounts in any namespace.')).toBeTruthy();
+  expect(getByText('No matching ServiceAccounts found')).toBeTruthy();
 });
 
 it('ServiceAccounts renders with one binding', () => {
@@ -95,7 +96,8 @@ it('ServiceAccounts renders with one binding', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -109,7 +111,7 @@ it('ServiceAccounts renders with one binding', () => {
   );
 
   expect(queryByText('ServiceAccounts')).toBeTruthy();
-  expect(queryByText('No ServiceAccounts in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching ServiceAccounts found')).toBeFalsy();
   expect(queryByText('foo-service-account')).toBeTruthy();
 });
 
@@ -124,7 +126,8 @@ it('ServiceAccounts can be filtered on a single label filter', async () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { getByTestId, getByText, queryByText } = renderWithRouter(
@@ -157,7 +160,8 @@ it('ServiceAccounts renders in loading state', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -171,5 +175,5 @@ it('ServiceAccounts renders in loading state', () => {
   );
 
   expect(queryByText(/ServiceAccounts/i)).toBeTruthy();
-  expect(queryByText('No ServiceAccounts in any namespace.')).toBeFalsy();
+  expect(queryByText('No matching ServiceAccounts found')).toBeFalsy();
 });

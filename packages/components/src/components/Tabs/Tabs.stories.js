@@ -18,6 +18,11 @@ import { Tab } from '..';
 
 export default {
   component: Tabs,
+  parameters: {
+    backgrounds: {
+      default: 'white'
+    }
+  },
   title: 'Components/Tabs'
 };
 

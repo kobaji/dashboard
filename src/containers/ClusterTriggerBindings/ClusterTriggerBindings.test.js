@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent } from 'react-testing-library';
+import { fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
@@ -68,7 +68,8 @@ it('ClusterTriggerBindings renders with no bindings', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { getByText } = renderWithRouter(
@@ -82,7 +83,7 @@ it('ClusterTriggerBindings renders with no bindings', () => {
   );
 
   expect(getByText('ClusterTriggerBindings')).toBeTruthy();
-  expect(getByText('No ClusterTriggerBindings')).toBeTruthy();
+  expect(getByText('No matching ClusterTriggerBindings found')).toBeTruthy();
 });
 
 it('ClusterTriggerBindings renders with one binding', () => {
@@ -96,7 +97,8 @@ it('ClusterTriggerBindings renders with one binding', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -110,7 +112,7 @@ it('ClusterTriggerBindings renders with one binding', () => {
   );
 
   expect(queryByText('ClusterTriggerBindings')).toBeTruthy();
-  expect(queryByText('No ClusterTriggerBindings')).toBeTruthy();
+  expect(queryByText('No matching ClusterTriggerBindings found')).toBeTruthy();
   expect(queryByText('cluster-trigger-binding')).toBeFalsy();
 });
 
@@ -125,7 +127,8 @@ it('ClusterTriggerBindings can be filtered on a single label filter', async () =
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText, getByTestId, getByText } = renderWithRouter(
@@ -158,7 +161,8 @@ it('ClusterTriggerBindings renders in loading state', () => {
       errorMessage: null
     },
     namespaces,
-    notifications: {}
+    notifications: {},
+    properties: {}
   });
 
   const { queryByText } = renderWithRouter(
@@ -172,8 +176,6 @@ it('ClusterTriggerBindings renders in loading state', () => {
   );
 
   expect(queryByText(/ClusterTriggerBindings/i)).toBeTruthy();
-  expect(
-    queryByText('No ClusterTriggerBindings in any namespace.')
-  ).toBeFalsy();
+  expect(queryByText('No matching ClusterTriggerBindings found')).toBeFalsy();
   expect(queryByText('cluster-trigger-bindings')).toBeFalsy();
 });

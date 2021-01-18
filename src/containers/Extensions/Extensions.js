@@ -25,7 +25,7 @@ import {
   isFetchingExtensions
 } from '../../reducers';
 
-import '../../components/Definitions/Definitions.scss';
+import '../../scss/Definitions.scss';
 
 export const Extensions = /* istanbul ignore next */ ({
   error,
@@ -59,7 +59,7 @@ export const Extensions = /* istanbul ignore next */ ({
 
   const emptyText = intl.formatMessage({
     id: 'dashboard.extensions.emptyState',
-    defaultMessage: 'No extensions'
+    defaultMessage: 'No extensions found'
   });
 
   return (
@@ -82,27 +82,25 @@ export const Extensions = /* istanbul ignore next */ ({
           }
         ]}
         rows={extensions.map(
-          ({ apiGroup, apiVersion, displayName, extensionType, name }) => {
-            return {
-              id: name,
-              name: (
-                <Link
-                  to={
-                    extensionType === 'kubernetes-resource'
-                      ? urls.kubernetesResources.all({
-                          group: apiGroup,
-                          version: apiVersion,
-                          type: name
-                        })
-                      : urls.extensions.byName({ name })
-                  }
-                  title={displayName}
-                >
-                  {displayName}
-                </Link>
-              )
-            };
-          }
+          ({ apiGroup, apiVersion, displayName, extensionType, name }) => ({
+            id: name,
+            name: (
+              <Link
+                to={
+                  extensionType === 'kubernetes-resource'
+                    ? urls.kubernetesResources.all({
+                        group: apiGroup,
+                        version: apiVersion,
+                        type: name
+                      })
+                    : urls.extensions.byName({ name })
+                }
+                title={displayName}
+              >
+                {displayName}
+              </Link>
+            )
+          })
         )}
         loading={loading}
         emptyTextAllNamespaces={emptyText}

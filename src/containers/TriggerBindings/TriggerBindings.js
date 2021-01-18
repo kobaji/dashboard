@@ -25,7 +25,7 @@ import {
 import { InlineNotification } from 'carbon-components-react';
 import { FormattedDate, Table } from '@tektoncd/dashboard-components';
 
-import { LabelFilter } from '..';
+import { ListPageLayout } from '..';
 import { fetchTriggerBindings } from '../../actions/triggerBindings';
 import {
   getSelectedNamespace,
@@ -114,7 +114,7 @@ export /* istanbul ignore next */ class TriggerBindings extends Component {
     }));
 
     return (
-      <>
+      <ListPageLayout title="TriggerBindings" {...this.props}>
         {error && (
           <InlineNotification
             kind="error"
@@ -131,8 +131,6 @@ export /* istanbul ignore next */ class TriggerBindings extends Component {
             lowContrast
           />
         )}
-        <h1>TriggerBindings</h1>
-        <LabelFilter {...this.props} />
         <Table
           headers={initialHeaders}
           rows={triggerBindingsFormatted}
@@ -141,19 +139,20 @@ export /* istanbul ignore next */ class TriggerBindings extends Component {
           emptyTextAllNamespaces={intl.formatMessage(
             {
               id: 'dashboard.emptyState.allNamespaces',
-              defaultMessage: 'No {kind} in any namespace.'
+              defaultMessage: 'No matching {kind} found'
             },
             { kind: 'TriggerBindings' }
           )}
           emptyTextSelectedNamespace={intl.formatMessage(
             {
               id: 'dashboard.emptyState.selectedNamespace',
-              defaultMessage: 'No {kind} in namespace {selectedNamespace}'
+              defaultMessage:
+                'No matching {kind} found in namespace {selectedNamespace}'
             },
             { kind: 'TriggerBindings', selectedNamespace }
           )}
         />
-      </>
+      </ListPageLayout>
     );
   }
 }

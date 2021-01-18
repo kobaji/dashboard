@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent, waitForElement } from 'react-testing-library';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
 import configureStore from 'redux-mock-store';
@@ -267,7 +267,7 @@ describe('TaskRuns container', () => {
     expect(queryByText('taskRunWithTwoLabels')).toBeTruthy();
 
     fireEvent.click(getByText(filterValue));
-    await waitForElement(() => getByText('taskRunWithSingleLabel'));
+    await waitFor(() => getByText('taskRunWithSingleLabel'));
     expect(queryByText(filterValue)).toBeFalsy();
 
     expect(queryByText('taskRunWithSingleLabel')).toBeTruthy();
@@ -358,7 +358,7 @@ describe('TaskRuns container', () => {
       url: urls.taskRuns.all()
     };
 
-    const { getByText, getByTitle } = renderWithRouter(
+    const { getAllByTitle, getByText } = renderWithRouter(
       <Provider store={store.getStore()}>
         <Route
           path={urls.taskRuns.all()}
@@ -378,8 +378,8 @@ describe('TaskRuns container', () => {
       { route: urls.taskRuns.all() }
     );
 
-    await waitForElement(() => getByText('taskRunWithTwoLabels'));
-    expect(getByTitle(/actions/i)).toBeTruthy();
+    await waitFor(() => getByText('taskRunWithTwoLabels'));
+    expect(getAllByTitle(/actions/i)[0]).toBeTruthy();
   });
 
   it('TaskRun actions are not available when in read-only mode', async () => {
@@ -390,7 +390,7 @@ describe('TaskRuns container', () => {
       url: urls.taskRuns.all()
     };
 
-    const { getByText, queryByTitle } = renderWithRouter(
+    const { getByText, queryAllByTitle } = renderWithRouter(
       <Provider store={store.getStore()}>
         <Route
           path={urls.taskRuns.all()}
@@ -399,7 +399,6 @@ describe('TaskRuns container', () => {
               {...props}
               match={match}
               error={null}
-              isReadOnly
               loading={false}
               namespace="namespace-1"
               fetchTaskRuns={() => Promise.resolve()}
@@ -411,15 +410,15 @@ describe('TaskRuns container', () => {
       { route: urls.taskRuns.all() }
     );
 
-    await waitForElement(() => getByText('taskRunWithTwoLabels'));
-    expect(queryByTitle(/actions/i)).toBeFalsy();
+    await waitFor(() => getByText('taskRunWithTwoLabels'));
+    expect(queryAllByTitle(/actions/i)[0]).toBeFalsy();
   });
 
   it('handles rerun event in TaskRuns page', async () => {
     const mockTestStore = mockStore(testStore);
     jest.spyOn(selectors, 'isReadOnly').mockImplementation(() => false);
     jest.spyOn(API, 'rerunTaskRun').mockImplementation(() => []);
-    const { getByTestId, getByText } = renderWithRouter(
+    const { getAllByTestId, getByText } = renderWithRouter(
       <Provider store={mockTestStore}>
         <Route
           path={urls.taskRuns.all()}
@@ -434,9 +433,9 @@ describe('TaskRuns container', () => {
       </Provider>,
       { route: urls.taskRuns.all() }
     );
-    await waitForElement(() => getByText(/taskRunWithTwoLabels/i));
-    fireEvent.click(await waitForElement(() => getByTestId('overflowmenu')));
-    await waitForElement(() => getByText(/Rerun/i));
+    await waitFor(() => getByText(/taskRunWithTwoLabels/i));
+    fireEvent.click(await waitFor(() => getAllByTestId('overflowmenu')[0]));
+    await waitFor(() => getByText(/Rerun/i));
     fireEvent.click(getByText('Rerun'));
     expect(API.rerunTaskRun).toHaveBeenCalledTimes(1);
     expect(API.rerunTaskRun).toHaveBeenCalledWith(

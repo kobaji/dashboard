@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -30,6 +30,16 @@ it('getPipeline', () => {
   const data = { fake: 'pipeline' };
   fetchMock.get(`end:${name}`, data);
   return API.getPipeline({ name }).then(pipeline => {
+    expect(pipeline).toEqual(data);
+    fetchMock.restore();
+  });
+});
+
+it('deletePipeline', () => {
+  const name = 'foo';
+  const data = { fake: 'pipeline' };
+  fetchMock.delete(`end:${name}`, data);
+  return API.deletePipeline({ name }).then(pipeline => {
     expect(pipeline).toEqual(data);
     fetchMock.restore();
   });

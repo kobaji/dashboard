@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { waitForElement } from 'react-testing-library';
+import { waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../../utils/test';
 import Logout from './LogoutButton';
 
@@ -22,7 +22,7 @@ it('Header renders logout button when logout url is set', async () => {
   const getLogoutURLMock = jest.fn().mockImplementation(() => mockedResponse);
   const logoutButton = <Logout getLogoutURL={getLogoutURLMock} />;
   const { queryByTitle } = renderWithRouter(logoutButton);
-  await waitForElement(() => queryByTitle(/log out/i));
+  await waitFor(() => queryByTitle(/log out/i));
 });
 
 it('Header renders logout button when logout url is not set', async () => {
@@ -36,6 +36,7 @@ it('Header renders logout button when logout url is not set', async () => {
 });
 
 it('Header does not render logout button when promise for getting properties is rejected', async () => {
+  jest.spyOn(console, 'log').mockImplementation(() => {}); // suppress log from test output
   const getLogoutURLMock = jest.fn().mockImplementation(() => Promise.reject());
   const { queryByText } = renderWithRouter(
     <Logout getLogoutURL={getLogoutURLMock} />

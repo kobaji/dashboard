@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -17,23 +17,20 @@ import { injectIntl } from 'react-intl';
 import isEqual from 'lodash.isequal';
 import keyBy from 'lodash.keyby';
 import {
+  ALL_NAMESPACES,
   getErrorMessage,
   getFilters,
   getTitle,
   urls
 } from '@tektoncd/dashboard-utils';
 import {
-  Modal,
+  DeleteModal,
   PipelineResources as PipelineResourcesList
 } from '@tektoncd/dashboard-components';
-import {
-  InlineNotification,
-  ListItem,
-  UnorderedList
-} from 'carbon-components-react';
+import { InlineNotification } from 'carbon-components-react';
 import { Add16 as Add, TrashCan32 as Delete } from '@carbon/icons-react';
 
-import { LabelFilter } from '..';
+import { ListPageLayout } from '..';
 import { fetchPipelineResources } from '../../actions/pipelineResources';
 import { deletePipelineResource } from '../../api';
 import {
@@ -46,7 +43,7 @@ import {
 } from '../../reducers';
 
 const initialState = {
-  deleteError: '',
+  deleteError: null,
   isDeleteModalOpen: false,
   toBeDeleted: []
 };
@@ -132,13 +129,16 @@ export /* istanbul ignore next */ class PipelineResources extends Component {
         action: this.deleteResource,
         modalProperties: {
           danger: true,
-          heading: intl.formatMessage({
-            id: 'dashboard.deletePipelineResource.heading',
-            defaultMessage: 'Delete PipelineResource'
-          }),
+          heading: intl.formatMessage(
+            {
+              id: 'dashboard.deleteResources.heading',
+              defaultMessage: 'Delete {kind}'
+            },
+            { kind: 'PipelineResource' }
+          ),
           primaryButtonText: intl.formatMessage({
-            id: 'dashboard.deletePipelineResource.primaryText',
-            defaultMessage: 'Delete PipelineResource'
+            id: 'dashboard.actions.deleteButton',
+            defaultMessage: 'Delete'
           }),
           secondaryButtonText: intl.formatMessage({
             id: 'dashboard.modal.cancelButton',
@@ -220,7 +220,7 @@ export /* istanbul ignore next */ class PipelineResources extends Component {
         ];
 
     return (
-      <>
+      <ListPageLayout title="PipelineResources" {...this.props}>
         {this.state.deleteError && (
           <InlineNotification
             kind="error"
@@ -234,12 +234,12 @@ export /* istanbul ignore next */ class PipelineResources extends Component {
               defaultMessage: 'Clear Notification'
             })}
             data-testid="errorNotificationComponent"
-            onCloseButtonClick={this.props.clearNotification}
+            onCloseButtonClick={() => {
+              this.setState({ deleteError: null });
+            }}
             lowContrast
           />
         )}
-        <h1>PipelineResources</h1>
-        <LabelFilter {...this.props} />
         <PipelineResourcesList
           batchActionButtons={batchActionButtons}
           loading={loading && !pipelineResources.length}
@@ -248,41 +248,15 @@ export /* istanbul ignore next */ class PipelineResources extends Component {
           toolbarButtons={toolbarButtons}
         />
         {isDeleteModalOpen ? (
-          <Modal
-            open={isDeleteModalOpen}
-            primaryButtonText={intl.formatMessage({
-              id: 'dashboard.actions.deleteButton',
-              defaultMessage: 'Delete'
-            })}
-            secondaryButtonText={intl.formatMessage({
-              id: 'dashboard.modal.cancelButton',
-              defaultMessage: 'Cancel'
-            })}
-            modalHeading={intl.formatMessage({
-              id: 'dashboard.pipelineResources.deleteHeading',
-              defaultMessage: 'Delete PipelineResources'
-            })}
-            onSecondarySubmit={this.closeDeleteModal}
-            onRequestSubmit={this.handleDelete}
-            onRequestClose={this.closeDeleteModal}
-            danger
-          >
-            <p>
-              {intl.formatMessage({
-                id: 'dashboard.pipelineResources.deleteConfirm',
-                defaultMessage:
-                  'Are you sure you want to delete these PipelineResources?'
-              })}
-            </p>
-            <UnorderedList nested>
-              {toBeDeleted.map(pipelineResource => {
-                const { name, namespace } = pipelineResource.metadata;
-                return <ListItem key={`${name}:${namespace}`}>{name}</ListItem>;
-              })}
-            </UnorderedList>
-          </Modal>
+          <DeleteModal
+            kind="PipelineResources"
+            onClose={this.closeDeleteModal}
+            onSubmit={this.handleDelete}
+            resources={toBeDeleted}
+            showNamespace={selectedNamespace === ALL_NAMESPACES}
+          />
         ) : null}
-      </>
+      </ListPageLayout>
     );
   }
 }

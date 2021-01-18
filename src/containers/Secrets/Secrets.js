@@ -1,5 +1,5 @@
 /*
-Copyright 2019-2020 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -15,6 +15,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { injectIntl } from 'react-intl';
 import isEqual from 'lodash.isequal';
+import keyBy from 'lodash.keyby';
 import { Link } from 'react-router-dom';
 import {
   FormGroup,
@@ -23,16 +24,20 @@ import {
   RadioButtonGroup,
   Tooltip
 } from 'carbon-components-react';
-import { FormattedDate, Table } from '@tektoncd/dashboard-components';
 import {
+  DeleteModal,
+  FormattedDate,
+  Table
+} from '@tektoncd/dashboard-components';
+import {
+  ALL_NAMESPACES,
   getErrorMessage,
   getFilters,
   getTitle,
   urls
 } from '@tektoncd/dashboard-utils';
 import { Add16 as Add, TrashCan32 as Delete } from '@carbon/icons-react';
-import { LabelFilter } from '..';
-import DeleteModal from '../../components/SecretsDeleteModal';
+import { ListPageLayout } from '..';
 import {
   clearNotification,
   deleteSecret,
@@ -142,11 +147,10 @@ export /* istanbul ignore next */ class Secrets extends Component {
     });
   };
 
-  handleDeleteSecretClick = (secrets, cancelMethod) => {
-    const toBeDeleted = secrets.map(secret => ({
-      namespace: secret.id.split(':')[0],
-      name: secret.id.split(':')[1]
-    }));
+  handleDeleteSecretClick = (selectedRows, cancelMethod) => {
+    const resourcesById = keyBy(this.props.secrets, 'metadata.uid');
+    const toBeDeleted = selectedRows.map(({ id }) => resourcesById[id]);
+
     this.setState({
       openDeleteSecret: true,
       cancelMethod,
@@ -273,13 +277,11 @@ export /* istanbul ignore next */ class Secrets extends Component {
     const secretsFormatted = secretsToUse.map(secret => {
       let annotations = '';
       if (secret.metadata.annotations !== undefined) {
-        Object.keys(secret.metadata.annotations).forEach(
-          function annotationSetup(key) {
-            if (key.includes('tekton.dev')) {
-              annotations += `${key}: ${secret.metadata.annotations[key]}\n`;
-            }
+        Object.keys(secret.metadata.annotations).forEach(key => {
+          if (key.includes('tekton.dev')) {
+            annotations += `${key}: ${secret.metadata.annotations[key]}\n`;
           }
-        );
+        });
       }
       const serviceAccountsWithSecret = [];
       serviceAccounts.forEach(serviceAccount => {
@@ -315,7 +317,7 @@ export /* istanbul ignore next */ class Secrets extends Component {
 
       const formattedSecret = {
         annotations,
-        id: `${secret.metadata.namespace}:${secret.metadata.name}`,
+        id: secret.metadata.uid,
         name: (
           <Link
             to={urls.secrets.byName({
@@ -339,7 +341,7 @@ export /* istanbul ignore next */ class Secrets extends Component {
     });
 
     return (
-      <>
+      <ListPageLayout title="Secrets" {...this.props}>
         {patchSuccess && (
           <InlineNotification
             kind="success"
@@ -395,8 +397,6 @@ export /* istanbul ignore next */ class Secrets extends Component {
             lowContrast
           />
         )}
-        <h1>Secrets</h1>
-        <LabelFilter {...this.props} />
         <FormGroup
           legendText={
             <Tooltip
@@ -457,14 +457,15 @@ export /* istanbul ignore next */ class Secrets extends Component {
           emptyTextAllNamespaces={intl.formatMessage(
             {
               id: 'dashboard.emptyState.allNamespaces',
-              defaultMessage: 'No {kind} in any namespace.'
+              defaultMessage: 'No matching {kind} found'
             },
             { kind: 'Secrets' }
           )}
           emptyTextSelectedNamespace={intl.formatMessage(
             {
               id: 'dashboard.emptyState.selectedNamespace',
-              defaultMessage: 'No {kind} in namespace {selectedNamespace}'
+              defaultMessage:
+                'No matching {kind} found in namespace {selectedNamespace}'
             },
             { kind: 'Secrets', selectedNamespace }
           )}
@@ -473,13 +474,14 @@ export /* istanbul ignore next */ class Secrets extends Component {
         />
         {!this.props.isReadOnly && openDeleteSecret && (
           <DeleteModal
-            open={openDeleteSecret}
-            handleClick={this.handleHideDeleteSecret}
-            handleDelete={this.delete}
-            toBeDeleted={toBeDeleted}
+            kind="Secrets"
+            onClose={this.handleHideDeleteSecret}
+            onSubmit={this.delete}
+            resources={toBeDeleted}
+            showNamespace={selectedNamespace === ALL_NAMESPACES}
           />
         )}
-      </>
+      </ListPageLayout>
     );
   }
 }

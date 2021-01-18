@@ -14,6 +14,7 @@ limitations under the License.
 
 export { default as DataTableSkeleton } from './DataTableSkeleton';
 export { default as DetailsHeader } from './DetailsHeader';
+export { default as DeleteModal } from './DeleteModal';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as FormattedDate } from './FormattedDate';
 export { default as FormattedDuration } from './FormattedDuration';
@@ -38,6 +39,7 @@ export { default as ResourceTable } from './ResourceTable';
 export { default as RunDropdown } from './RunDropdown';
 export { default as RunHeader } from './RunHeader';
 export { default as Spinner } from './Spinner';
+export { default as StatusFilterDropdown } from './StatusFilterDropdown';
 export { default as StatusIcon } from './StatusIcon';
 export { default as Step } from './Step';
 export { default as StepDefinition } from './StepDefinition';

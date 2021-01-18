@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent } from 'react-testing-library';
+import { fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
 import configureStore from 'redux-mock-store';
@@ -74,6 +74,7 @@ const testStore = {
   notifications: {
     webSocketConnected: false
   },
+  properties: {},
   ...conditionsTestStore
 };
 
@@ -86,7 +87,8 @@ describe('Conditions', () => {
     const mockTestStore = mockStore({
       conditions: { byId: {}, byNamespace: {}, isFetching: true },
       ...namespacesTestStore,
-      notifications: {}
+      notifications: {},
+      properties: {}
     });
     const { queryByText } = renderWithRouter(
       <Provider store={mockTestStore}>
@@ -131,7 +133,8 @@ describe('Conditions', () => {
           ...testStore,
           notifications: {
             webSocketConnected: true
-          }
+          },
+          propeties: {}
         })}
       >
         <Route

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Tekton Authors
+Copyright 2019-2021 The Tekton Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { fireEvent, waitForElement } from 'react-testing-library';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { renderWithIntl } from '../../utils/test';
 import RunDropdown from './RunDropdown';
 
@@ -31,11 +31,11 @@ describe('RunDropdown dropdown no modal', () => {
         action: () => mockCallBack()
       }
     ];
-    const { getByText, getByTitle } = renderWithIntl(
+    const { getByText, getAllByTitle } = renderWithIntl(
       <RunDropdown items={items} resource={resource} />
     );
-    fireEvent.click(getByTitle(`Actions`));
-    await waitForElement(() => getByText('Action'));
+    fireEvent.click(getAllByTitle('Actions')[0]);
+    await waitFor(() => getByText('Action'));
     fireEvent.click(getByText(`Action`));
     expect(mockCallBack).toHaveBeenCalled();
   });
@@ -50,11 +50,11 @@ describe('RunDropdown dropdown missing disable default behaviour', () => {
         action: () => mockCallBack()
       }
     ];
-    const { getByText, getByTitle } = renderWithIntl(
+    const { getByText, getAllByTitle } = renderWithIntl(
       <RunDropdown items={items} resource={resource} />
     );
-    fireEvent.click(getByTitle(`Actions`));
-    await waitForElement(() => getByText('Action'));
+    fireEvent.click(getAllByTitle('Actions')[0]);
+    await waitFor(() => getByText('Action'));
     fireEvent.click(getByText(`Action`));
     expect(mockCallBack).toHaveBeenCalled();
   });
@@ -70,11 +70,11 @@ describe('RunDropdown disabled field', () => {
         action: () => mockCallBack()
       }
     ];
-    const { getByText, getByTitle } = renderWithIntl(
+    const { getByText, getAllByTitle } = renderWithIntl(
       <RunDropdown items={items} resource={resource} />
     );
-    fireEvent.click(getByTitle(`Actions`));
-    await waitForElement(() => getByText('Action'));
+    fireEvent.click(getAllByTitle('Actions')[0]);
+    await waitFor(() => getByText('Action'));
     fireEvent.click(getByText(`Action`));
     expect(mockCallBack).not.toHaveBeenCalled();
   });
@@ -96,13 +96,13 @@ describe('RunDropdown with modal', () => {
         }
       }
     ];
-    const { getByText, getByTitle } = renderWithIntl(
+    const { getByText, getAllByTitle } = renderWithIntl(
       <RunDropdown items={items} resource={resource} />
     );
-    fireEvent.click(getByTitle(`Actions`));
-    await waitForElement(() => getByText('Action'));
+    fireEvent.click(getAllByTitle('Actions')[0]);
+    await waitFor(() => getByText('Action'));
     fireEvent.click(getByText(`Action`));
-    await waitForElement(() => getByText('primary'));
+    await waitFor(() => getByText('primary'));
     fireEvent.click(getByText(`primary`));
     expect(mockCallBack).toHaveBeenCalled();
   });

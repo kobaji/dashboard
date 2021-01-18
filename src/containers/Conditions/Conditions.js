@@ -25,7 +25,7 @@ import {
 import { FormattedDate, Table } from '@tektoncd/dashboard-components';
 import { InlineNotification } from 'carbon-components-react';
 
-import { LabelFilter } from '..';
+import { ListPageLayout } from '..';
 import { fetchConditions } from '../../actions/conditions';
 import {
   getConditions,
@@ -131,9 +131,7 @@ export class Conditions extends Component {
     }
 
     return (
-      <>
-        <h1>Conditions</h1>
-        <LabelFilter {...this.props} />
+      <ListPageLayout title="Conditions" {...this.props}>
         <Table
           headers={headers}
           rows={conditionsFormatted}
@@ -142,19 +140,20 @@ export class Conditions extends Component {
           emptyTextAllNamespaces={intl.formatMessage(
             {
               id: 'dashboard.emptyState.allNamespaces',
-              defaultMessage: 'No {kind} in any namespace.'
+              defaultMessage: 'No matching {kind} found'
             },
             { kind: 'Conditions' }
           )}
           emptyTextSelectedNamespace={intl.formatMessage(
             {
               id: 'dashboard.emptyState.selectedNamespace',
-              defaultMessage: 'No {kind} in namespace {selectedNamespace}'
+              defaultMessage:
+                'No matching {kind} found in namespace {selectedNamespace}'
             },
             { kind: 'Conditions', selectedNamespace }
           )}
         />
-      </>
+      </ListPageLayout>
     );
   }
 }

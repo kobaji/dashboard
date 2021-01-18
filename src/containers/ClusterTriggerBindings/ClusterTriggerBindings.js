@@ -25,7 +25,7 @@ import {
 import { InlineNotification } from 'carbon-components-react';
 import { FormattedDate, Table } from '@tektoncd/dashboard-components';
 
-import { LabelFilter } from '..';
+import { ListPageLayout } from '..';
 import { fetchClusterTriggerBindings } from '../../actions/clusterTriggerBindings';
 import {
   getClusterTriggerBindings,
@@ -101,7 +101,11 @@ export /* istanbul ignore next */ class ClusterTriggerBindings extends Component
     );
 
     return (
-      <>
+      <ListPageLayout
+        hideNamespacesDropdown
+        title="ClusterTriggerBindings"
+        {...this.props}
+      >
         {error && (
           <InlineNotification
             kind="error"
@@ -118,8 +122,6 @@ export /* istanbul ignore next */ class ClusterTriggerBindings extends Component
             lowContrast
           />
         )}
-        <h1>ClusterTriggerBindings</h1>
-        <LabelFilter {...this.props} />
         <Table
           headers={initialHeaders}
           rows={clusterTriggerBindingsFormatted}
@@ -127,19 +129,19 @@ export /* istanbul ignore next */ class ClusterTriggerBindings extends Component
           emptyTextAllNamespaces={intl.formatMessage(
             {
               id: 'dashboard.emptyState.clusterResource',
-              defaultMessage: 'No {kind}'
+              defaultMessage: 'No matching {kind} found'
             },
             { kind: 'ClusterTriggerBindings' }
           )}
           emptyTextSelectedNamespace={intl.formatMessage(
             {
               id: 'dashboard.emptyState.clusterResource',
-              defaultMessage: 'No {kind}'
+              defaultMessage: 'No matching {kind} found'
             },
             { kind: 'ClusterTriggerBindings' }
           )}
         />
-      </>
+      </ListPageLayout>
     );
   }
 }
